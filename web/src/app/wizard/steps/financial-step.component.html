@@ -1,0 +1,42 @@
+<div [formGroup]="group()" class="field-grid">
+  <fieldset class="field span-2 choice-set">
+    <legend>Employment</legend>
+    <div class="chips">
+      @for (option of employmentOptions; track option.value) {
+        <label class="chip">
+          <input type="radio" formControlName="employmentStatus" [value]="option.value" />
+          <span>{{ option.label }}</span>
+        </label>
+      }
+    </div>
+  </fieldset>
+
+  @if (showEmployer) {
+    <label class="field span-2">
+      <span>Employer or business name</span>
+      <input formControlName="employer" autocomplete="organization" />
+      <app-field-error [control]="group().controls.employer"
+                       [messages]="{ required: 'Enter an employer or business name.' }" />
+    </label>
+  }
+
+  <label class="field">
+    <span>Annual income</span>
+    <div class="money-input">
+      <span aria-hidden="true">$</span>
+      <input formControlName="annualIncome" type="number" min="0" step="1000" inputmode="numeric" />
+    </div>
+    <app-field-error [control]="group().controls.annualIncome" [messages]="{ required: 'Enter annual income, or 0.' }" />
+  </label>
+
+  <label class="field">
+    <span>Estimated net worth</span>
+    <div class="money-input">
+      <span aria-hidden="true">$</span>
+      <input formControlName="netWorth" type="number" min="0" step="1000" inputmode="numeric" />
+    </div>
+    <app-field-error [control]="group().controls.netWorth" [messages]="{ required: 'Enter estimated net worth, or 0.' }" />
+  </label>
+
+  <p class="hint span-2">Net worth excludes the value of a primary home.</p>
+</div>

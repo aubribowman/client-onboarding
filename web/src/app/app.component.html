@@ -1,0 +1,13 @@
+<header class="topbar">
+  <div class="topbar-inner">
+    <a routerLink="/" class="brand">Harbor Point <span>Client Onboarding</span></a>
+    <nav aria-label="Main">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">New application</a>
+      <a routerLink="/applications" routerLinkActive="active">Review queue</a>
+    </nav>
+  </div>
+</header>
+
+<main class="content">
+  <router-outlet />
+</main>

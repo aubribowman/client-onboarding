@@ -1,0 +1,57 @@
+<div [formGroup]="group()" class="field-grid">
+  <label class="field">
+    <span>First name</span>
+    <input formControlName="firstName" autocomplete="given-name" />
+    <app-field-error [control]="group().controls.firstName" [messages]="{ required: 'Enter a first name.' }" />
+  </label>
+
+  <label class="field">
+    <span>Last name</span>
+    <input formControlName="lastName" autocomplete="family-name" />
+    <app-field-error [control]="group().controls.lastName" [messages]="{ required: 'Enter a last name.' }" />
+  </label>
+
+  <label class="field">
+    <span>Email</span>
+    <input formControlName="email" type="email" autocomplete="email" />
+    <app-field-error [control]="group().controls.email" label="an email address" />
+  </label>
+
+  <label class="field">
+    <span>Phone</span>
+    <input formControlName="phone" type="tel" autocomplete="tel" placeholder="(615) 555-0100" />
+    <app-field-error [control]="group().controls.phone" label="a phone number" />
+  </label>
+
+  <label class="field">
+    <span>Date of birth</span>
+    <input formControlName="dateOfBirth" type="date" autocomplete="bday" />
+    <app-field-error [control]="group().controls.dateOfBirth" label="a date of birth" />
+  </label>
+
+  <label class="field span-2">
+    <span>Street address</span>
+    <input formControlName="addressLine1" autocomplete="address-line1" />
+    <app-field-error [control]="group().controls.addressLine1" label="a street address" />
+  </label>
+
+  <label class="field">
+    <span>City</span>
+    <input formControlName="city" autocomplete="address-level2" />
+    <app-field-error [control]="group().controls.city" label="a city" />
+  </label>
+
+  <div class="field-row">
+    <label class="field">
+      <span>State</span>
+      <input formControlName="state" maxlength="2" autocomplete="address-level1" placeholder="TN"
+             class="uppercase" />
+      <app-field-error [control]="group().controls.state" label="a state" [messages]="{ pattern: 'Use a two-letter code, like TN.' }" />
+    </label>
+    <label class="field">
+      <span>ZIP code</span>
+      <input formControlName="postalCode" inputmode="numeric" maxlength="5" autocomplete="postal-code" />
+      <app-field-error [control]="group().controls.postalCode" label="a ZIP code" [messages]="{ pattern: 'Enter a 5-digit ZIP code.' }" />
+    </label>
+  </div>
+</div>

@@ -1,0 +1,42 @@
+<div class="risk-layout">
+  <ol class="questions" [formGroup]="group()">
+    @for (question of questions(); track question.id; let i = $index) {
+      <li>
+        <fieldset [class.missing]="isMissing(question.id)">
+          <legend><span class="q-number">{{ i + 1 }}</span>{{ question.text }}</legend>
+          <div class="options">
+            @for (option of question.options; track option.value) {
+              <label class="option">
+                <input type="radio" [formControlName]="question.id" [value]="option.value" />
+                <span>{{ option.label }}</span>
+              </label>
+            }
+          </div>
+          @if (isMissing(question.id)) {
+            <p class="field-error">Choose an answer to continue.</p>
+          }
+        </fieldset>
+      </li>
+    }
+  </ol>
+
+  <aside class="preview" aria-live="polite">
+    <h3>Risk profile</h3>
+    <div class="scale" role="img"
+         [attr.aria-label]="result() ? 'Profile: ' + result()!.profile : 'Not scored yet'">
+      @for (profile of profiles; track profile) {
+        <div class="segment" [class.active]="result()?.profile === profile">
+          <span>{{ profile }}</span>
+        </div>
+      }
+    </div>
+    @if (result(); as r) {
+      <p class="profile-name">{{ r.profile }}</p>
+      <p class="profile-desc">{{ descriptions[r.profile] }}</p>
+      <p class="profile-score">Score {{ r.score }} of {{ questions().length * 4 }}</p>
+    } @else {
+      <p class="profile-desc">Answer all {{ questions().length }} questions to see the profile.
+        {{ answered() }} answered so far.</p>
+    }
+  </aside>
+</div>

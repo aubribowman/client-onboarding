@@ -1,0 +1,67 @@
+<div class="wizard">
+  <nav class="rail" aria-label="Application steps">
+    <ol>
+      @for (step of steps; track step.title; let i = $index) {
+        <li [class.done]="i !== current() && i <= furthest() && stepDone(i)"
+            [class.current]="i === current()">
+          <button type="button" (click)="goTo(i)" [disabled]="i > furthest()"
+                  [attr.aria-current]="i === current() ? 'step' : null">
+            <span class="marker" aria-hidden="true">{{ i + 1 }}</span>
+            <span class="label">{{ step.title }}</span>
+          </button>
+        </li>
+      }
+    </ol>
+
+    @if (draftSavedAt() || restoredDraft()) {
+      <div class="draft">
+        <p>{{ draftSavedAt() ? 'Draft saved on this device.' : 'Picked up where you left off.' }}</p>
+        <button type="button" class="link" (click)="startOver()">Start over</button>
+      </div>
+    }
+  </nav>
+
+  <form class="panel" [formGroup]="form" (ngSubmit)="isLast() ? submit() : next()" novalidate>
+    <header class="panel-header">
+      <p class="step-count">Step {{ current() + 1 }} of {{ steps.length }}</p>
+      <h1>{{ steps[current()].title }}</h1>
+      <p class="lede">{{ steps[current()].description }}</p>
+    </header>
+
+    @switch (loadState()) {
+      @case ('loading') {
+        <p class="status">Loading the application…</p>
+      }
+      @case ('error') {
+        <div class="status error" role="alert">
+          <p>The risk questionnaire couldn’t load. Start the API with <code>dotnet run</code> in the
+            <code>api</code> folder, then try again.</p>
+          <button type="button" class="button secondary" (click)="loadQuestions()">Try again</button>
+        </div>
+      }
+      @case ('ready') {
+        @switch (current()) {
+          @case (0) { <app-personal-step [group]="form.controls.personal" /> }
+          @case (1) { <app-financial-step [group]="form.controls.financial" /> }
+          @case (2) {
+            <app-risk-step [group]="form.controls.risk" [questions]="questions()" [showErrors]="attempted()" />
+          }
+          @case (3) { <app-account-step [group]="form.controls.account" /> }
+          @case (4) {
+            <app-review-step [form]="form" [questions]="questions()" [serverErrors]="serverErrors()"
+                             (edit)="goTo($event)" />
+          }
+        }
+
+        <footer class="actions">
+          @if (current() > 0) {
+            <button type="button" class="button secondary" (click)="back()">Back</button>
+          }
+          <button type="submit" class="button primary" [disabled]="submitting()">
+            {{ isLast() ? (submitting() ? 'Submitting…' : 'Submit application') : 'Continue' }}
+          </button>
+        </footer>
+      }
+    }
+  </form>
+</div>

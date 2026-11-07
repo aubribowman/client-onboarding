@@ -1,0 +1,65 @@
+@let v = value();
+
+@if (serverErrors().length) {
+  <div class="server-errors" role="alert">
+    <p>The application wasn’t submitted. Fix these and submit again:</p>
+    <ul>
+      @for (message of serverErrors(); track message) { <li>{{ message }}</li> }
+    </ul>
+  </div>
+}
+
+<section class="summary">
+  <header><h2>Client details</h2><button type="button" class="link" (click)="edit.emit(0)">Edit</button></header>
+  <dl>
+    <dt>Name</dt><dd>{{ v.personal.firstName }} {{ v.personal.lastName }}</dd>
+    <dt>Email</dt><dd>{{ v.personal.email }}</dd>
+    <dt>Phone</dt><dd>{{ v.personal.phone }}</dd>
+    <dt>Date of birth</dt><dd>{{ v.personal.dateOfBirth | date: 'longDate' : 'UTC' }}</dd>
+    <dt>Address</dt>
+    <dd>{{ v.personal.addressLine1 }}<br />{{ v.personal.city }}, {{ v.personal.state.toUpperCase() }} {{ v.personal.postalCode }}</dd>
+  </dl>
+</section>
+
+<section class="summary">
+  <header><h2>Employment and finances</h2><button type="button" class="link" (click)="edit.emit(1)">Edit</button></header>
+  <dl>
+    <dt>Employment</dt>
+    <dd>
+      {{ employmentLabels[v.financial.employmentStatus] }}
+      @if (v.financial.employer && (v.financial.employmentStatus === 'Employed' || v.financial.employmentStatus === 'SelfEmployed')) {
+        at {{ v.financial.employer }}
+      }
+    </dd>
+    <dt>Annual income</dt><dd class="num">{{ v.financial.annualIncome | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+    <dt>Net worth</dt><dd class="num">{{ v.financial.netWorth | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+  </dl>
+</section>
+
+<section class="summary">
+  <header><h2>Risk questionnaire</h2><button type="button" class="link" (click)="edit.emit(2)">Edit</button></header>
+  @if (risk(); as r) {
+    <p class="risk-line"><strong>{{ r.profile }}</strong> profile, score {{ r.score }}</p>
+  }
+  <dl>
+    @for (q of questions(); track q.id) {
+      <dt>{{ q.text }}</dt><dd>{{ answerLabel(q) }}</dd>
+    }
+  </dl>
+</section>
+
+<section class="summary">
+  <header><h2>Account setup</h2><button type="button" class="link" (click)="edit.emit(3)">Edit</button></header>
+  <dl>
+    <dt>Account type</dt><dd>{{ accountTypeLabels[v.account.accountType] }}</dd>
+    <dt>Initial deposit</dt><dd class="num">{{ v.account.initialDeposit | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+    <dt>Funding</dt><dd>{{ fundingMethodLabels[v.account.fundingMethod] }}</dd>
+  </dl>
+</section>
+
+<label class="terms" [formGroup]="form()">
+  <input type="checkbox" formControlName="acceptedTerms" />
+  <span>The client has read and accepts the account agreement and fee schedule.</span>
+</label>
+<app-field-error [control]="form().controls.acceptedTerms"
+                 [messages]="{ required: 'Confirm the client accepts the agreement to submit.' }" />

@@ -1,0 +1,60 @@
+<header class="page-header">
+  <div>
+    <h1>Review queue</h1>
+    <p class="lede">Every submitted application, newest first. Filter by status to see what needs a decision.</p>
+  </div>
+  <label class="filter">
+    <span>Status</span>
+    <select (change)="setFilter($any($event.target).value)">
+      <option value="">All statuses</option>
+      @for (option of statusOptions; track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </label>
+</header>
+
+@switch (state().kind) {
+  @case ('loading') { <p class="status">Loading applications…</p> }
+  @case ('error') {
+    <p class="status" role="alert">Applications couldn’t load. Check that the API is running on port 5044.</p>
+  }
+  @case ('ready') {
+    @let items = rows();
+    @if (items.length === 0) {
+      <div class="empty">
+        <p>No applications match this status.</p>
+        <a routerLink="/">Start a new application</a>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Reference</th>
+              <th scope="col">Client</th>
+              <th scope="col">Account</th>
+              <th scope="col" class="num">Deposit</th>
+              <th scope="col">Risk profile</th>
+              <th scope="col">Status</th>
+              <th scope="col">Submitted</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (app of items; track app.id) {
+              <tr>
+                <td><a [routerLink]="['/applications', app.id]" class="ref">{{ app.referenceNumber }}</a></td>
+                <td>{{ app.clientName }}</td>
+                <td>{{ accountTypeLabels[app.accountType] }}</td>
+                <td class="num">{{ app.initialDeposit | currency: 'USD' : 'symbol' : '1.0-0' }}</td>
+                <td>{{ app.riskProfile }}</td>
+                <td><app-status-badge [status]="app.status" /></td>
+                <td>{{ app.submittedAt | date: 'MMM d, y' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+}

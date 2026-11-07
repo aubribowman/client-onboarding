@@ -1,0 +1,47 @@
+# Run these from VS Code (REST Client extension) or Visual Studio.
+@host = http://localhost:5044
+
+### Risk questions
+GET {{host}}/api/risk-questions
+
+### All applications
+GET {{host}}/api/applications
+
+### Only ones waiting for review
+GET {{host}}/api/applications?status=Submitted
+
+### Submit a new application
+POST {{host}}/api/applications
+Content-Type: application/json
+
+{
+  "personal": {
+    "firstName": "Jordan", "lastName": "Lee", "email": "jordan.lee@example.com",
+    "phone": "6155550199", "dateOfBirth": "1995-08-20",
+    "addressLine1": "200 Broadway", "city": "Nashville", "state": "TN", "postalCode": "37201"
+  },
+  "financial": { "employmentStatus": "Employed", "employer": "Example Co.", "annualIncome": 80000, "netWorth": 120000 },
+  "riskAnswers": [
+    { "questionId": "horizon", "value": 4 }, { "questionId": "drawdown", "value": 3 },
+    { "questionId": "goal", "value": 3 }, { "questionId": "experience", "value": 2 },
+    { "questionId": "liquidity", "value": 3 }
+  ],
+  "account": { "accountType": "Individual", "initialDeposit": 10000, "fundingMethod": "BankTransfer" },
+  "acceptedTerms": true
+}
+
+### Validation failure: underage, no terms, missing answers
+POST {{host}}/api/applications
+Content-Type: application/json
+
+{
+  "personal": {
+    "firstName": "Sam", "lastName": "Young", "email": "sam@example.com",
+    "phone": "6155550111", "dateOfBirth": "2012-01-01",
+    "addressLine1": "1 Elm", "city": "Nashville", "state": "TN", "postalCode": "37201"
+  },
+  "financial": { "employmentStatus": "Student", "annualIncome": 0, "netWorth": 0 },
+  "riskAnswers": [{ "questionId": "horizon", "value": 2 }],
+  "account": { "accountType": "Individual", "initialDeposit": 1000, "fundingMethod": "Check" },
+  "acceptedTerms": false
+}

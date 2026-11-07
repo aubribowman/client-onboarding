@@ -1,0 +1,113 @@
+.wizard {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+}
+
+/* The step rail: a real sequence, so numbered markers joined by a line
+   that turns green as steps are completed. */
+.rail {
+  position: sticky;
+  top: 1.5rem;
+
+  ol { list-style: none; margin: 0; padding: 0; }
+
+  li {
+    position: relative;
+    padding-bottom: 1.5rem;
+
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 0.9375rem;
+      top: 2.25rem;
+      bottom: 0.25rem;
+      width: 2px;
+      background: var(--rule);
+    }
+
+    &.done:not(:last-child)::after { background: var(--accent); }
+  }
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink-muted);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:disabled { cursor: default; opacity: 0.6; }
+    &:not(:disabled):hover .label { color: var(--ink); }
+  }
+
+  .marker {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 2px solid var(--rule);
+    background: var(--paper);
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .done .marker {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .current {
+    button { color: var(--ink); font-weight: 600; }
+    .marker { border-color: var(--accent); color: var(--accent); }
+  }
+}
+
+.draft {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+
+  p { margin: 0 0 0.25rem; }
+}
+
+.panel { min-width: 0; max-width: 46rem; }
+
+.panel-header {
+  margin-bottom: 2rem;
+
+  h1 { margin: 0; font-size: 1.75rem; line-height: 1.2; letter-spacing: -0.01em; }
+  .lede { margin: 0.5rem 0 0; color: var(--ink-muted); max-width: 34rem; }
+}
+
+.step-count { display: none; margin: 0 0 0.25rem; font-size: 0.875rem; color: var(--ink-muted); }
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.status { color: var(--ink-muted); }
+.status.error { color: var(--ink); }
+
+@media (max-width: 900px) {
+  .wizard { grid-template-columns: 1fr; gap: 1.5rem; }
+  .rail { position: static; ol { display: none; } .draft { margin: 0; padding: 0; border: 0; } }
+  .step-count { display: block; }
+}

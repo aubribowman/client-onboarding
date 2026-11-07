@@ -1,0 +1,32 @@
+<div [formGroup]="group()" class="field-grid">
+  <fieldset class="field span-2 choice-set">
+    <legend>Account type</legend>
+    <div class="chips">
+      @for (option of accountTypes; track option.value) {
+        <label class="chip">
+          <input type="radio" formControlName="accountType" [value]="option.value" />
+          <span>{{ option.label }}</span>
+        </label>
+      }
+    </div>
+  </fieldset>
+
+  <label class="field">
+    <span>Initial deposit</span>
+    <div class="money-input">
+      <span aria-hidden="true">$</span>
+      <input formControlName="initialDeposit" type="number" min="1000" step="500" inputmode="numeric" />
+    </div>
+    <app-field-error [control]="group().controls.initialDeposit"
+                     [messages]="{ required: 'Enter an initial deposit.', min: 'The minimum initial deposit is $1,000.' }" />
+  </label>
+
+  <label class="field">
+    <span>Funding method</span>
+    <select formControlName="fundingMethod">
+      @for (option of fundingMethods; track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </label>
+</div>

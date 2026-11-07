@@ -1,0 +1,111 @@
+.risk-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 15rem;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.questions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.75rem;
+}
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0 0 0 0.875rem;
+  border-left: 2px solid transparent;
+
+  &.missing { border-left-color: var(--error); }
+}
+
+legend {
+  display: flex;
+  gap: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  padding: 0;
+}
+
+.q-number {
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  min-width: 1ch;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding-left: calc(1ch + 0.75rem);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+
+  &:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--accent-wash);
+  }
+
+  input { accent-color: var(--accent); margin: 0; }
+}
+
+.preview {
+  position: sticky;
+  top: 1.5rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+
+  h3 { margin: 0 0 1rem; font-size: 0.9375rem; }
+}
+
+.scale {
+  display: grid;
+  gap: 3px;
+}
+
+.segment {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+  background: var(--paper);
+  transition: background 200ms ease, color 200ms ease;
+
+  &:first-child { border-radius: 6px 6px 0 0; }
+  &:last-child { border-radius: 0 0 6px 6px; }
+
+  &.active {
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
+  }
+}
+
+.profile-name { font-size: 1.25rem; font-weight: 700; margin: 1.25rem 0 0.25rem; }
+.profile-desc { margin: 0.75rem 0 0; color: var(--ink-muted); font-size: 0.875rem; }
+.profile-name + .profile-desc { margin-top: 0; }
+.profile-score { margin: 0.75rem 0 0; font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 800px) {
+  .risk-layout { grid-template-columns: 1fr; }
+  .preview { position: static; order: -1; }
+  .options { grid-template-columns: 1fr; padding-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment { transition: none; }
+}

@@ -1,0 +1,92 @@
+<a routerLink="/applications" class="back">Back to review queue</a>
+
+@if (application(); as app) {
+  @if (justSubmitted()) {
+    <div class="notice" role="status">
+      Application {{ app.referenceNumber }} was submitted and is waiting for review.
+    </div>
+  }
+
+  <header class="page-header">
+    <div>
+      <p class="ref">{{ app.referenceNumber }}</p>
+      <h1>{{ app.personal.firstName }} {{ app.personal.lastName }}</h1>
+      <p class="lede">{{ labels.account[app.account.accountType] }} account,
+        {{ app.account.initialDeposit | currency: 'USD' : 'symbol' : '1.0-0' }} initial deposit</p>
+    </div>
+    <app-status-badge [status]="app.status" />
+  </header>
+
+  <div class="detail-grid">
+    <div class="main">
+      <section>
+        <h2>Risk profile</h2>
+        <p class="risk"><strong>{{ app.riskProfile }}</strong>, score {{ app.riskScore }} of 20</p>
+        <p class="muted">{{ labels.risk[app.riskProfile] }}</p>
+      </section>
+
+      <section>
+        <h2>Client details</h2>
+        <dl>
+          <dt>Email</dt><dd>{{ app.personal.email }}</dd>
+          <dt>Phone</dt><dd>{{ formatPhone(app.personal.phone) }}</dd>
+          <dt>Date of birth</dt><dd>{{ app.personal.dateOfBirth | date: 'longDate' : 'UTC' }}</dd>
+          <dt>Address</dt>
+          <dd>{{ app.personal.addressLine1 }}, {{ app.personal.city }}, {{ app.personal.state }} {{ app.personal.postalCode }}</dd>
+        </dl>
+      </section>
+
+      <section>
+        <h2>Employment and finances</h2>
+        <dl>
+          <dt>Employment</dt>
+          <dd>{{ labels.employment[app.financial.employmentStatus] }}@if (app.financial.employer) {, {{ app.financial.employer }}}</dd>
+          <dt>Annual income</dt><dd class="num">{{ app.financial.annualIncome | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+          <dt>Net worth</dt><dd class="num">{{ app.financial.netWorth | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+          <dt>Funding</dt><dd>{{ labels.funding[app.account.fundingMethod] }}</dd>
+        </dl>
+      </section>
+    </div>
+
+    <aside class="side">
+      @if (nextStatuses().length) {
+        <section class="actions-panel">
+          <h2>Decision</h2>
+          <label class="field">
+            <span>Note to the file</span>
+            <textarea [(ngModel)]="note" rows="3" placeholder="Required when requesting info"></textarea>
+          </label>
+          <div class="action-buttons">
+            @for (status of nextStatuses(); track status) {
+              <button type="button" class="button"
+                      [class.primary]="status === 'Approved' || status === 'InReview'"
+                      [class.secondary]="status !== 'Approved' && status !== 'InReview'"
+                      [disabled]="saving()" (click)="changeStatus(status)">
+                {{ labels.action[status] }}
+              </button>
+            }
+          </div>
+          @if (actionError(); as message) { <p class="field-error" role="alert">{{ message }}</p> }
+        </section>
+      }
+
+      <section>
+        <h2>History</h2>
+        <ol class="timeline">
+          @for (change of app.history.slice().reverse(); track $index) {
+            <li>
+              <p class="t-status">{{ labels.status[change.status] }}</p>
+              <p class="t-date">{{ change.changedAt | date: 'MMM d, y, h:mm a' }}</p>
+              @if (change.note) { <p class="t-note">{{ change.note }}</p> }
+            </li>
+          }
+        </ol>
+      </section>
+    </aside>
+  </div>
+} @else if (loadError()) {
+  <p class="status" role="alert">This application couldn’t load. It may not exist, or the API restarted
+    and cleared its in-memory data.</p>
+} @else {
+  <p class="status">Loading application…</p>
+}
