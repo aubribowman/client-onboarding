@@ -1,60 +1,138 @@
-<header class="page-header">
-  <div>
-    <h1>Review queue</h1>
-    <p class="lede">Every submitted application, newest first. Filter by status to see what needs a decision.</p>
-  </div>
-  <label class="filter">
-    <span>Status</span>
-    <select (change)="setFilter($any($event.target).value)">
-      <option value="">All statuses</option>
-      @for (option of statusOptions; track option.value) {
-        <option [value]="option.value">{{ option.label }}</option>
-      }
-    </select>
-  </label>
-</header>
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Review queue</h1>
+      <p class="page-lede">Every submitted application, newest first. Start with the ones waiting on a decision.</p>
+    </div>
+    <a routerLink="/" class="button primary">
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      New application
+    </a>
+  </header>
 
-@switch (state().kind) {
-  @case ('loading') { <p class="status">Loading applications…</p> }
-  @case ('error') {
-    <p class="status" role="alert">Applications couldn’t load. Check that the API is running on port 5044.</p>
+  @if (total() !== null) {
+    @let c = counts();
+    <section class="tiles" aria-label="Queue summary">
+      <div class="tile dark">
+        <span class="tile-head">
+          <span>Needs a decision</span>
+          <span class="tile-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
+          </span>
+        </span>
+        <span class="tile-num">{{ c.Submitted + c.InReview }}</span>
+        <span class="tile-foot">Submitted or in review</span>
+      </div>
+      <div class="tile card">
+        <span class="tile-head">
+          <span>In review</span>
+          <span class="tile-icon info" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>
+          </span>
+        </span>
+        <span class="tile-num">{{ c.InReview }}</span>
+        <span class="tile-foot">Being checked now</span>
+      </div>
+      <div class="tile card">
+        <span class="tile-head">
+          <span>Waiting on the client</span>
+          <span class="tile-icon warn" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v10H8l-4 4z"/></svg>
+          </span>
+        </span>
+        <span class="tile-num">{{ c.NeedsInfo }}</span>
+        <span class="tile-foot">Info requested</span>
+      </div>
+      <div class="tile card">
+        <span class="tile-head">
+          <span>Decided</span>
+          <span class="tile-icon success" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+          </span>
+        </span>
+        <span class="tile-num">{{ c.Approved + c.Declined }}</span>
+        <span class="tile-foot">{{ c.Approved }} approved · {{ c.Declined }} declined</span>
+      </div>
+    </section>
   }
-  @case ('ready') {
-    @let items = rows();
-    @if (items.length === 0) {
-      <div class="empty">
-        <p>No applications match this status.</p>
-        <a routerLink="/">Start a new application</a>
+
+  <section class="table-card card">
+    <div class="toolbar">
+      <div class="tabs" role="group" aria-label="Filter by status">
+        @for (tab of tabs(); track tab.label) {
+          <button type="button" [class.on]="filter() === tab.value" [attr.aria-pressed]="filter() === tab.value"
+                  (click)="setFilter(tab.value)">
+            {{ tab.label }}
+            @if (tab.count !== null) { <span class="count">{{ tab.count }}</span> }
+          </button>
+        }
       </div>
-    } @else {
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Reference</th>
-              <th scope="col">Client</th>
-              <th scope="col">Account</th>
-              <th scope="col" class="num">Deposit</th>
-              <th scope="col">Risk profile</th>
-              <th scope="col">Status</th>
-              <th scope="col">Submitted</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (app of items; track app.id) {
-              <tr>
-                <td><a [routerLink]="['/applications', app.id]" class="ref">{{ app.referenceNumber }}</a></td>
-                <td>{{ app.clientName }}</td>
-                <td>{{ accountTypeLabels[app.accountType] }}</td>
-                <td class="num">{{ app.initialDeposit | currency: 'USD' : 'symbol' : '1.0-0' }}</td>
-                <td>{{ app.riskProfile }}</td>
-                <td><app-status-badge [status]="app.status" /></td>
-                <td>{{ app.submittedAt | date: 'MMM d, y' }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <label class="search">
+        <span class="visually-hidden">Search by client or reference</span>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input type="search" placeholder="Search client or reference" [value]="query()"
+               (input)="query.set($any($event.target).value)" />
+      </label>
+    </div>
+
+    @switch (state().kind) {
+      @case ('loading') { <p class="status">Loading applications…</p> }
+      @case ('error') {
+        <p class="status" role="alert">Applications couldn’t load. Check that the API is running on port 5044.</p>
+      }
+      @case ('ready') {
+        @let items = rows();
+        @if (items.length === 0) {
+          <div class="empty">
+            <p>{{ query() ? 'No applications match that search.' : 'No applications match this status.' }}</p>
+            <a routerLink="/">Start a new application</a>
+          </div>
+        } @else {
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Client</th>
+                  <th scope="col">Account</th>
+                  <th scope="col" class="num">Deposit</th>
+                  <th scope="col">Risk</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Submitted</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (app of items; track app.id) {
+                  <tr>
+                    <td>
+                      <span class="client">
+                        <span class="avatar" aria-hidden="true" [style.background]="avatarColor(app.clientName)">{{ initials(app.clientName) }}</span>
+                        <span class="client-text">
+                          <a [routerLink]="['/applications', app.id]" class="client-name">{{ app.clientName }}</a>
+                          <span class="ref">{{ app.referenceNumber }}</span>
+                        </span>
+                      </span>
+                    </td>
+                    <td class="muted">{{ accountTypeLabels[app.accountType] }}</td>
+                    <td class="num strong">{{ app.initialDeposit | currency: 'USD' : 'symbol' : '1.0-0' }}</td>
+                    <td>
+                      <span class="risk">
+                        <span class="level" aria-hidden="true">
+                          @for (n of levels; track n) {
+                            <span [class.on]="n <= riskLevel(app.riskProfile)" [style.height.px]="5 + n * 3"></span>
+                          }
+                        </span>
+                        {{ app.riskProfile }}
+                      </span>
+                    </td>
+                    <td><app-status-badge [status]="app.status" /></td>
+                    <td class="muted">{{ app.submittedAt | date: 'MMM d, y' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
     }
-  }
-}
+  </section>
+</div>

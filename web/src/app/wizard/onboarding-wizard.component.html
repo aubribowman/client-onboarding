@@ -1,64 +1,84 @@
 <div class="wizard">
-  <nav class="rail" aria-label="Application steps">
+  <header class="wizard-header">
+    <div>
+      <p class="eyebrow">Step {{ current() + 1 }} of {{ steps.length }}</p>
+      <h1 class="page-title">{{ steps[current()].title }}</h1>
+      <p class="page-lede">{{ steps[current()].description }}</p>
+    </div>
+
+    @if (draftSavedAt() || restoredDraft()) {
+      <div class="draft">
+        <span class="dot" aria-hidden="true"></span>
+        <span>{{ draftSavedAt() ? 'Draft saved on this device' : 'Picked up where you left off' }}</span>
+        <button type="button" class="link" (click)="startOver()">Start over</button>
+      </div>
+    }
+  </header>
+
+  <nav class="stepper card" aria-label="Application steps">
     <ol>
       @for (step of steps; track step.title; let i = $index) {
         <li [class.done]="i !== current() && i <= furthest() && stepDone(i)"
             [class.current]="i === current()">
+          <span class="bar" aria-hidden="true"></span>
           <button type="button" (click)="goTo(i)" [disabled]="i > furthest()"
                   [attr.aria-current]="i === current() ? 'step' : null">
-            <span class="marker" aria-hidden="true">{{ i + 1 }}</span>
+            <span class="marker" aria-hidden="true">
+              @if (i !== current() && i <= furthest() && stepDone(i)) {
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+              } @else {
+                {{ i + 1 }}
+              }
+            </span>
             <span class="label">{{ step.title }}</span>
           </button>
         </li>
       }
     </ol>
-
-    @if (draftSavedAt() || restoredDraft()) {
-      <div class="draft">
-        <p>{{ draftSavedAt() ? 'Draft saved on this device.' : 'Picked up where you left off.' }}</p>
-        <button type="button" class="link" (click)="startOver()">Start over</button>
-      </div>
-    }
   </nav>
 
-  <form class="panel" [formGroup]="form" (ngSubmit)="isLast() ? submit() : next()" novalidate>
-    <header class="panel-header">
-      <p class="step-count">Step {{ current() + 1 }} of {{ steps.length }}</p>
-      <h1>{{ steps[current()].title }}</h1>
-      <p class="lede">{{ steps[current()].description }}</p>
-    </header>
-
+  <form [formGroup]="form" (ngSubmit)="isLast() ? submit() : next()" novalidate>
     @switch (loadState()) {
       @case ('loading') {
-        <p class="status">Loading the application…</p>
+        <p class="status card">Loading the application…</p>
       }
       @case ('error') {
-        <div class="status error" role="alert">
+        <div class="status card error" role="alert">
           <p>The risk questionnaire couldn’t load. Start the API with <code>dotnet run</code> in the
             <code>api</code> folder, then try again.</p>
           <button type="button" class="button secondary" (click)="loadQuestions()">Try again</button>
         </div>
       }
       @case ('ready') {
-        @switch (current()) {
-          @case (0) { <app-personal-step [group]="form.controls.personal" /> }
-          @case (1) { <app-financial-step [group]="form.controls.financial" /> }
-          @case (2) {
-            <app-risk-step [group]="form.controls.risk" [questions]="questions()" [showErrors]="attempted()" />
+        <div class="step-body" [class.card]="current() !== 2" [class.padded]="current() !== 2">
+          @switch (current()) {
+            @case (0) { <app-personal-step [group]="form.controls.personal" /> }
+            @case (1) { <app-financial-step [group]="form.controls.financial" /> }
+            @case (2) {
+              <app-risk-step [group]="form.controls.risk" [questions]="questions()" [showErrors]="attempted()" />
+            }
+            @case (3) { <app-account-step [group]="form.controls.account" /> }
+            @case (4) {
+              <app-review-step [form]="form" [questions]="questions()" [serverErrors]="serverErrors()"
+                               (edit)="goTo($event)" />
+            }
           }
-          @case (3) { <app-account-step [group]="form.controls.account" /> }
-          @case (4) {
-            <app-review-step [form]="form" [questions]="questions()" [serverErrors]="serverErrors()"
-                             (edit)="goTo($event)" />
-          }
-        }
+        </div>
 
-        <footer class="actions">
+        <footer class="actions card">
           @if (current() > 0) {
-            <button type="button" class="button secondary" (click)="back()">Back</button>
+            <button type="button" class="button ghost" (click)="back()">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
+              Back
+            </button>
           }
           <button type="submit" class="button primary" [disabled]="submitting()">
-            {{ isLast() ? (submitting() ? 'Submitting…' : 'Submit application') : 'Continue' }}
+            @if (isLast()) {
+              {{ submitting() ? 'Submitting…' : 'Submit application' }}
+            } @else {
+              Continue to {{ steps[current() + 1].title.toLowerCase() }}
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+            }
           </button>
         </footer>
       }
