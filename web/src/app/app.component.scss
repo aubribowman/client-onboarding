@@ -71,6 +71,8 @@ nav {
   }
 }
 
+.theme { margin-top: auto; }
+
 .content {
   min-width: 0;
   padding: 2rem clamp(1rem, 4vw, 3rem) 4rem;
@@ -95,9 +97,16 @@ nav {
 
   .brand { padding: 0; }
   .brand-sub { display: none; }
+  .theme { margin-top: 0; }
   nav { flex-direction: row; }
   nav a { padding: 0 0.625rem; font-size: 0.875rem; }
   .content { padding: 1.5rem 1rem 3rem; }
+}
+
+/* Phones: brand and theme on the first row, the links on their own row. */
+@media (max-width: 640px) {
+  .theme { order: 2; }
+  nav { order: 3; flex-basis: 100%; }
 }
 
 @media (max-width: 480px) {

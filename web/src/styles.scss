@@ -63,55 +63,64 @@
   --scrim: rgba(10, 26, 58, 0.45);
 }
 
+/* Dark tokens. They apply when the person picks Dark, or when they leave
+   the theme on System and the device is in dark mode. The theme switch
+   sets data-theme on <html>; no attribute means "follow the system". */
+@mixin dark-tokens {
+  color-scheme: dark;
+  --paper: #0b1222;
+  --surface: #121b2e;
+  --surface-sunk: #0f1728;
+  --ink: #e6ebf5;
+  --ink-soft: #c3cbdb;
+  --ink-muted: #9aa6bf;
+  --ink-faint: #727e96;
+  --rule: #26324a;
+  --rule-soft: #1d283d;
+
+  --accent: #7c9dff;
+  --accent-hover: #9ab4ff;
+  --accent-bright: #8fb0ff;
+  --accent-wash: #18264a;
+  --accent-tint: #141f3a;
+  --on-accent: #0a1a3a;
+
+  --info: #c3adff;
+  --info-dot: #a98bff;
+  --info-wash: #2a1f47;
+  --warn: #f0b456;
+  --warn-dot: #e0a03c;
+  --warn-wash: #3a2a10;
+  --warn-tint: #2a2010;
+  --warn-line: #5a4318;
+  --success: #5fd9ab;
+  --success-dot: #3cc690;
+  --success-wash: #0f3329;
+  --error: #f58a80;
+  --error-hover: #f7a39b;
+  --error-dot: #f06a5f;
+  --error-wash: #3a1d1a;
+  --error-line: #5c2a25;
+  --neutral-wash: #1d283d;
+  --neutral-dot: #8a94a8;
+
+  --focus: #8fb0ff;
+
+  --shell: #070d1a;
+  --shell-soft: #152a55;
+  --shell-deep: #0d1730;
+
+  --sidebar: #0e1626;
+
+  --shadow-pop: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --scrim: rgba(0, 0, 0, 0.6);
+}
+
+:root { color-scheme: light; }
+:root[data-theme='dark'] { @include dark-tokens; }
+
 @media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #0b1222;
-    --surface: #121b2e;
-    --surface-sunk: #0f1728;
-    --ink: #e6ebf5;
-    --ink-soft: #c3cbdb;
-    --ink-muted: #9aa6bf;
-    --ink-faint: #727e96;
-    --rule: #26324a;
-    --rule-soft: #1d283d;
-
-    --accent: #7c9dff;
-    --accent-hover: #9ab4ff;
-    --accent-bright: #8fb0ff;
-    --accent-wash: #18264a;
-    --accent-tint: #141f3a;
-    --on-accent: #0a1a3a;
-
-    --info: #c3adff;
-    --info-dot: #a98bff;
-    --info-wash: #2a1f47;
-    --warn: #f0b456;
-    --warn-dot: #e0a03c;
-    --warn-wash: #3a2a10;
-    --warn-tint: #2a2010;
-    --warn-line: #5a4318;
-    --success: #5fd9ab;
-    --success-dot: #3cc690;
-    --success-wash: #0f3329;
-    --error: #f58a80;
-    --error-hover: #f7a39b;
-    --error-dot: #f06a5f;
-    --error-wash: #3a1d1a;
-    --error-line: #5c2a25;
-    --neutral-wash: #1d283d;
-    --neutral-dot: #8a94a8;
-
-    --focus: #8fb0ff;
-
-    --shell: #070d1a;
-    --shell-soft: #152a55;
-    --shell-deep: #0d1730;
-
-    --sidebar: #0e1626;
-
-    --shadow-pop: 0 16px 40px rgba(0, 0, 0, 0.5);
-    --scrim: rgba(0, 0, 0, 0.6);
-  }
+  :root:not([data-theme='light']) { @include dark-tokens; }
 }
 
 *, *::before, *::after { box-sizing: border-box; }

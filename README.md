@@ -35,6 +35,7 @@ Built with **Angular 19** and **ASP.NET Core 8 Web API**.
 - **Draft autosave**: progress is saved in the browser, so refreshing the page or choosing “Save and exit” doesn’t lose a half-finished application.
 - **Review queue** with status filters, search, sorting by deposit or wait time, and days-waiting warnings at 2 and 4 days.
 - **Application detail** with Overview, Risk answers and History tabs, plus “Things to check” flags (for example, a deposit that is most of the client’s savings, or a trust account that needs documents).
+- **Light and dark themes**: pick Light, Dark or System from the sidebar. The choice is remembered on the device.
 - **Review workflow rules** enforced on the server: an application has to be in review before it can be approved, and requesting info requires a note. Declining asks for confirmation and a reason.
 
 ## Tech stack
