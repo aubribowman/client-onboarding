@@ -1,72 +1,81 @@
-<div class="risk-layout">
-  <ol class="questions" [formGroup]="group()">
-    @for (question of questions(); track question.id; let i = $index) {
-      <li>
-        <fieldset class="card" [class.missing]="isMissing(question.id)">
-          <legend>
-            <span class="q-number" [class.answered]="answers()[question.id] != null">{{ i + 1 }}</span>
-            <span>{{ question.text }}</span>
-          </legend>
-          <div class="options">
-            @for (option of question.options; track option.value) {
-              <label class="option">
-                <input type="radio" [formControlName]="question.id" [value]="option.value" />
-                <span class="option-label">{{ option.label }}</span>
-                <span class="level" aria-hidden="true">
-                  @for (n of levels; track n) {
-                    <span [class.on]="n <= option.value" [style.height.px]="4 + n * 3"></span>
-                  }
-                </span>
-              </label>
-            }
-          </div>
-          @if (isMissing(question.id)) {
-            <p class="field-error">Choose an answer to continue.</p>
-          }
-        </fieldset>
-      </li>
-    }
-  </ol>
-
-  <aside class="preview" aria-live="polite">
-    <div class="preview-head">
-      <h2>Risk profile</h2>
-      <span>{{ answered() }} of {{ questions().length }} answered</span>
-    </div>
-
-    <div class="gauge" role="img"
-         [attr.aria-label]="result() ? 'Score ' + result()!.score + ' of ' + maxScore() : answered() + ' of ' + questions().length + ' answered'">
-      <svg width="180" height="180" viewBox="0 0 180 180" aria-hidden="true">
-        <circle class="gauge-track" cx="90" cy="90" r="76" stroke-width="14" />
-        <circle class="gauge-fill" cx="90" cy="90" r="76" stroke-width="14" [attr.stroke-dasharray]="dash()" />
-      </svg>
-      <div class="gauge-center" aria-hidden="true">
-        @if (result(); as r) {
-          <span class="score">{{ r.score }}</span>
-          <span class="of">of {{ maxScore() }}</span>
-        } @else {
-          <span class="score">{{ answered() }}/{{ questions().length }}</span>
-          <span class="of">answered</span>
+<!-- Keyed by question id so each question gets fresh radio inputs bound to its own control. -->
+@for (q of shown(); track q.id) {
+  <div class="risk-layout">
+    <section class="card ask" [formGroup]="group()">
+      <div class="progress" aria-hidden="true">
+        @for (item of questions(); track item.id; let i = $index) {
+          <span [class.filled]="answers()[item.id] != null" [class.here]="i === index()"></span>
         }
       </div>
-    </div>
 
-    @if (result(); as r) {
-      <p class="profile-name">{{ r.profile }}</p>
-      <p class="profile-desc">{{ descriptions[r.profile] }}</p>
-    } @else {
-      <p class="profile-name pending">Not scored yet</p>
-      <p class="profile-desc">Answer every question to see the profile.</p>
-    }
+      <fieldset [class.missing]="isMissing()">
+        <legend>
+          <span class="label-caps">Question {{ index() + 1 }} of {{ questions().length }}</span>
+          <span class="q-text">{{ q.text }}</span>
+        </legend>
 
-    <div class="scale" aria-hidden="true">
-      @for (profile of profiles; track profile; let i = $index) {
-        <span class="segment" [class.active]="result()?.profile === profile" [class.past]="isBelow(i)">
-          <span class="seg-bar"></span>
-          <span class="seg-name">{{ profile }}</span>
-        </span>
-      }
-    </div>
-  </aside>
-</div>
-<p class="footnote">This is a preview. The API recalculates the score when the application is submitted.</p>
+        <div class="options">
+          @for (option of q.options; track option.value; let k = $index) {
+            <label class="option">
+              <input type="radio" [formControlName]="q.id" [value]="option.value" />
+              <kbd aria-hidden="true">{{ k + 1 }}</kbd>
+              <span class="option-label">{{ option.label }}</span>
+              <span class="level" aria-hidden="true">
+                @for (n of levels; track n) {
+                  <span [class.on]="n <= option.value" [style.height.px]="4 + n * 3"></span>
+                }
+              </span>
+            </label>
+          }
+        </div>
+
+        @if (isMissing()) {
+          <p class="field-error" role="alert">Choose an answer to continue.</p>
+        }
+      </fieldset>
+
+      <p class="keys">Tip: press 1–{{ q.options.length }} to pick an answer.</p>
+    </section>
+
+    <aside class="card summary" aria-live="polite">
+      <div class="score-row">
+        <div class="gauge" role="img"
+             [attr.aria-label]="result() ? 'Score ' + result()!.score + ' of ' + maxScore() : answered() + ' of ' + questions().length + ' answered'">
+          <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">
+            <circle class="gauge-track" cx="42" cy="42" r="34" stroke-width="8" />
+            <circle class="gauge-fill" cx="42" cy="42" r="34" stroke-width="8" [attr.stroke-dasharray]="dash()" />
+          </svg>
+          <span class="gauge-center" aria-hidden="true">
+            {{ result() ? result()!.score : answered() + '/' + questions().length }}
+          </span>
+        </div>
+        <div>
+          <p class="label-caps">Risk profile</p>
+          @if (result(); as r) {
+            <p class="profile serif">{{ r.profile }}</p>
+          } @else {
+            <p class="profile serif pending">Not scored yet</p>
+          }
+        </div>
+      </div>
+      <p class="profile-desc">
+        {{ result() ? descriptions[result()!.profile] : 'Answer every question to see the profile.' }}
+      </p>
+
+      <ol class="answers">
+        @for (item of questions(); track item.id; let i = $index) {
+          <li>
+            <button type="button" (click)="index.set(i)" [attr.aria-current]="i === index() ? 'step' : null">
+              <span class="n">{{ i + 1 }}</span>
+              <span class="a-text">
+                <span class="a-q">{{ item.text }}</span>
+                <span class="a-a" [class.none]="!answerLabel(item)">{{ answerLabel(item) ?? 'Not answered' }}</span>
+              </span>
+            </button>
+          </li>
+        }
+      </ol>
+      <p class="footnote">A preview. The API recalculates the score on submit.</p>
+    </aside>
+  </div>
+}

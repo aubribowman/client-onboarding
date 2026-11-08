@@ -6,6 +6,7 @@ import { catchError, map, of, startWith, switchMap } from 'rxjs';
 import { accountTypeLabels, entries, statusLabels } from '../core/labels';
 import { ApplicationStatus, ApplicationSummary, RiskProfile } from '../core/models';
 import { OnboardingApiService } from '../core/onboarding-api.service';
+import { daysWaiting, openStatuses, waitingTone } from '../core/queue';
 import { riskProfiles } from '../core/risk';
 import { StatusBadgeComponent } from './status-badge.component';
 
@@ -14,7 +15,14 @@ type ListState =
   | { kind: 'error' }
   | { kind: 'ready'; items: ApplicationSummary[] };
 
-const AVATAR_COLORS = ['#0a1a3a', '#1f4fd8', '#6b3fd4', '#0f766e', '#a15c00'];
+/** "Open" is every status that still needs action. */
+type Filter = 'Open' | 'All' | ApplicationStatus;
+type SortKey = 'submitted' | 'deposit' | 'waiting';
+
+interface Row extends ApplicationSummary {
+  waiting: number | null;
+  tone: ReturnType<typeof waitingTone>;
+}
 
 @Component({
   selector: 'app-application-list',
@@ -26,16 +34,19 @@ export class ApplicationListComponent {
   private readonly api = inject(OnboardingApiService);
 
   readonly accountTypeLabels = accountTypeLabels;
-  readonly filter = signal<ApplicationStatus | null>(null);
+  readonly filter = signal<Filter>('Open');
   readonly query = signal('');
+  readonly sort = signal<{ key: SortKey; desc: boolean }>({ key: 'submitted', desc: true });
   readonly levels = [1, 2, 3, 4];
+  readonly skeletonRows = [1, 2, 3, 4, 5];
 
-  // Each filter change starts a new request; switchMap cancels the one
-  // still in flight so a slow response can't overwrite a newer one.
+  // A single status is filtered by the API. "Open" and "All" fetch
+  // everything and narrow it here. switchMap cancels the request still
+  // in flight so a slow response can't overwrite a newer one.
   readonly state = toSignal(
     toObservable(this.filter).pipe(
-      switchMap(status =>
-        this.api.list(status).pipe(
+      switchMap(filter =>
+        this.api.list(filter === 'Open' || filter === 'All' ? null : filter).pipe(
           map(items => ({ kind: 'ready', items }) as ListState),
           startWith({ kind: 'loading' } as ListState),
           catchError(() => of({ kind: 'error' } as ListState))
@@ -45,7 +56,7 @@ export class ApplicationListComponent {
     { initialValue: { kind: 'loading' } as ListState }
   );
 
-  // The whole queue, fetched once, for the summary tiles and tab counts.
+  // The whole queue, fetched once, for the summary and chip counts.
   private readonly all = toSignal(this.api.list(null).pipe(catchError(() => of(null))), { initialValue: null });
 
   readonly counts = computed(() => {
@@ -56,34 +67,51 @@ export class ApplicationListComponent {
 
   readonly total = computed(() => this.all()?.length ?? null);
 
-  readonly tabs = computed(() => [
-    { value: null, label: 'All', count: this.total() },
-    ...entries(statusLabels).map(o => ({ value: o.value as ApplicationStatus | null, label: o.label, count: this.all() ? this.counts()[o.value] : null }))
-  ]);
+  /** Open items that have waited four days or more. */
+  readonly overdue = computed(() => (this.all() ?? []).filter(a => (daysWaiting(a) ?? 0) >= 4).length);
 
-  /** The current filter's results, narrowed by the search box. */
-  readonly rows = computed(() => {
+  readonly chips = computed(() => {
+    const known = this.all() !== null;
+    const c = this.counts();
+    return [
+      { value: 'Open' as Filter, label: 'Open', count: known ? c.Submitted + c.InReview + c.NeedsInfo : null },
+      ...entries(statusLabels).map(o => ({ value: o.value as Filter, label: o.label, count: known ? c[o.value] : null })),
+      { value: 'All' as Filter, label: 'All', count: this.total() }
+    ];
+  });
+
+  /** The current results, narrowed by "Open" and the search box, then sorted. */
+  readonly rows = computed<Row[]>(() => {
     const state = this.state();
     if (state.kind !== 'ready') return [];
     const q = this.query().trim().toLowerCase();
-    return q
-      ? state.items.filter(a => a.clientName.toLowerCase().includes(q) || a.referenceNumber.toLowerCase().includes(q))
-      : state.items;
+    const now = new Date();
+    const rows = state.items
+      .filter(a => this.filter() !== 'Open' || openStatuses.includes(a.status))
+      .filter(a => !q || a.clientName.toLowerCase().includes(q) || a.referenceNumber.toLowerCase().includes(q))
+      .map(a => {
+        const waiting = daysWaiting(a, now);
+        return { ...a, waiting, tone: waitingTone(waiting) };
+      });
+
+    const { key, desc } = this.sort();
+    const value = (r: Row): number =>
+      key === 'deposit' ? r.initialDeposit : key === 'waiting' ? (r.waiting ?? -1) : new Date(r.submittedAt).getTime();
+    return rows.sort((a, b) => (desc ? value(b) - value(a) : value(a) - value(b)));
   });
 
-  setFilter(value: ApplicationStatus | null): void {
-    this.filter.set(value);
+  sortBy(key: SortKey): void {
+    this.sort.update(s => (s.key === key ? { key, desc: !s.desc } : { key, desc: true }));
+  }
+
+  ariaSort(key: SortKey): 'ascending' | 'descending' | null {
+    const s = this.sort();
+    return s.key === key ? (s.desc ? 'descending' : 'ascending') : null;
   }
 
   initials(name: string): string {
     const parts = name.trim().split(/\s+/);
     return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
-  }
-
-  avatarColor(name: string): string {
-    let hash = 0;
-    for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-    return AVATAR_COLORS[hash % AVATAR_COLORS.length];
   }
 
   riskLevel(profile: RiskProfile): number {

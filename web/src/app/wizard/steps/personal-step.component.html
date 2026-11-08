@@ -19,7 +19,7 @@
 
   <label class="field">
     <span>Phone</span>
-    <input formControlName="phone" type="tel" autocomplete="tel" placeholder="(615) 555-0100" />
+    <input formControlName="phone" appPhone autocomplete="tel" placeholder="(615) 555-0100" />
     <app-field-error [control]="group().controls.phone" label="a phone number" />
   </label>
 

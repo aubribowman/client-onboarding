@@ -15,131 +15,173 @@
     <header class="hero card">
       <div class="who">
         <span class="avatar" aria-hidden="true">{{ initials(app) }}</span>
-        <div class="who-text">
+        <div>
           <h1>{{ app.personal.firstName }} {{ app.personal.lastName }}</h1>
-          <div class="chips">
-            <span class="tag strong">{{ app.referenceNumber }}</span>
-            <span class="tag">{{ labels.account[app.account.accountType] }} account</span>
-            <span class="tag">Submitted {{ app.submittedAt | date: 'MMM d, y' }}</span>
+          <p class="meta">
+            <span class="num">{{ app.referenceNumber }}</span><span>{{ labels.account[app.account.accountType] }}</span><span>Submitted {{ app.submittedAt | date: 'MMM d, y' }}</span>
             <app-status-badge [status]="app.status" />
-          </div>
+          </p>
         </div>
       </div>
       <div class="deposit">
-        <span class="deposit-label">Initial deposit</span>
-        <span class="deposit-num">{{ app.account.initialDeposit | currency: 'USD' : 'symbol' : '1.0-0' }}</span>
-        <span class="deposit-label">{{ labels.funding[app.account.fundingMethod] }}</span>
+        <span class="label-caps">Initial deposit</span>
+        <span class="deposit-num num">{{ app.account.initialDeposit | currency: 'USD' : 'symbol' : '1.0-0' }}</span>
+        <span class="muted">{{ labels.funding[app.account.fundingMethod] }}</span>
       </div>
       <ol class="stages" aria-label="Review progress">
         @for (stage of stages(); track $index) {
-          <li [attr.data-tone]="stage.tone"
-              [attr.aria-current]="stage.tone === 'info' || stage.tone === 'warn' ? 'step' : null">
-            <span class="stage-bar" aria-hidden="true"></span>
-            <span>{{ stage.label }}</span>
+          <li [attr.data-tone]="stage.tone" [attr.aria-current]="stage.tone === 'info' || stage.tone === 'warn' ? 'step' : null">
+            {{ stage.label }}
           </li>
         }
       </ol>
     </header>
 
+    @if (flags().length) {
+      <section class="flags" aria-labelledby="flags-title">
+        <p id="flags-title" class="label-caps">Things to check</p>
+        <ul>
+          @for (flag of flags(); track flag.title) {
+            <li [attr.data-tone]="flag.tone"><strong>{{ flag.title }}.</strong> {{ flag.detail }}</li>
+          }
+        </ul>
+      </section>
+    }
+
     <div class="detail-grid">
-      <div class="main">
-        <section class="risk card">
-          <div class="risk-summary">
-            <div class="gauge" role="img" [attr.aria-label]="'Risk score ' + app.riskScore + ' of ' + maxScore()">
-              <svg width="136" height="136" viewBox="0 0 136 136" aria-hidden="true">
-                <circle class="gauge-track" cx="68" cy="68" r="56" stroke-width="12" />
-                <circle class="gauge-fill" cx="68" cy="68" r="56" stroke-width="12" [attr.stroke-dasharray]="dash()" />
-              </svg>
-              <div class="gauge-center" aria-hidden="true">
-                <span class="score">{{ app.riskScore }}</span>
-                <span class="of">of {{ maxScore() }}</span>
-              </div>
-            </div>
-            <p class="profile">{{ app.riskProfile }}</p>
-          </div>
-          <div class="risk-detail">
-            <h2>Risk profile</h2>
-            <p class="muted">{{ labels.risk[app.riskProfile] }}</p>
-            @if (answers().length) {
-              <dl class="answers">
-                @for (a of answers(); track a.question) {
-                  <dt>{{ a.question }}</dt><dd>{{ a.answer }}</dd>
-                }
-              </dl>
-            }
-          </div>
-        </section>
-
-        <div class="pair">
-          <section class="card info-card">
-            <h2>Client details</h2>
-            <dl>
-              <dt>Email</dt><dd class="wrap">{{ app.personal.email }}</dd>
-              <dt>Phone</dt><dd class="num">{{ formatPhone(app.personal.phone) }}</dd>
-              <dt>Born</dt><dd>{{ app.personal.dateOfBirth | date: 'longDate' : 'UTC' }}</dd>
-              <dt>Address</dt>
-              <dd>{{ app.personal.addressLine1 }}<br />{{ app.personal.city }}, {{ app.personal.state }} {{ app.personal.postalCode }}</dd>
-            </dl>
-          </section>
-
-          <section class="card info-card">
-            <h2>Employment and finances</h2>
-            <dl>
-              <dt>Employment</dt>
-              <dd>{{ labels.employment[app.financial.employmentStatus] }}@if (app.financial.employer) {, {{ app.financial.employer }}}</dd>
-              <dt>Annual income</dt><dd class="num">{{ app.financial.annualIncome | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
-              <dt>Net worth</dt><dd class="num">{{ app.financial.netWorth | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
-              <dt>Funding</dt><dd>{{ labels.funding[app.account.fundingMethod] }}</dd>
-            </dl>
-          </section>
+      <section class="card tabs-card">
+        <div class="tabs" role="tablist" aria-label="Application sections" (keydown)="onTabKey($event)">
+          @for (t of tabs; track t.id) {
+            <button type="button" role="tab" [id]="'tab-' + t.id" [attr.aria-selected]="tab() === t.id"
+                    [attr.aria-controls]="'panel-' + t.id" [tabindex]="tab() === t.id ? 0 : -1" (click)="tab.set(t.id)">
+              {{ t.label }}
+              @if (t.id === 'history') { <span class="count num">{{ app.history.length }}</span> }
+            </button>
+          }
         </div>
-      </div>
 
-      <aside class="side">
+        <div class="panel" role="tabpanel" [id]="'panel-' + tab()" [attr.aria-labelledby]="'tab-' + tab()">
+          @switch (tab()) {
+            @case ('overview') {
+              <div class="pair">
+                <div>
+                  <h2>Client details</h2>
+                  <dl>
+                    <dt>Email</dt><dd class="wrap">{{ app.personal.email }}</dd>
+                    <dt>Phone</dt><dd class="num">{{ formatPhone(app.personal.phone) }}</dd>
+                    <dt>Born</dt><dd>{{ app.personal.dateOfBirth | date: 'longDate' : 'UTC' }}</dd>
+                    <dt>Address</dt>
+                    <dd>{{ app.personal.addressLine1 }}<br />{{ app.personal.city }}, {{ app.personal.state }} {{ app.personal.postalCode }}</dd>
+                  </dl>
+                </div>
+                <div>
+                  <h2>Employment and finances</h2>
+                  <dl>
+                    <dt>Employment</dt>
+                    <dd>{{ labels.employment[app.financial.employmentStatus] }}@if (app.financial.employer) {, {{ app.financial.employer }}}</dd>
+                    <dt>Annual income</dt><dd class="num">{{ app.financial.annualIncome | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+                    <dt>Net worth</dt><dd class="num">{{ app.financial.netWorth | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+                    <dt>Risk profile</dt><dd>{{ app.riskProfile }} <span class="muted">({{ app.riskScore }} of {{ maxScore() }})</span></dd>
+                  </dl>
+                </div>
+              </div>
+            }
+            @case ('risk') {
+              <div class="risk-head">
+                <div class="gauge" role="img" [attr.aria-label]="'Risk score ' + app.riskScore + ' of ' + maxScore()">
+                  <svg width="104" height="104" viewBox="0 0 104 104" aria-hidden="true">
+                    <circle class="gauge-track" cx="52" cy="52" r="44" stroke-width="9" />
+                    <circle class="gauge-fill" cx="52" cy="52" r="44" stroke-width="9" [attr.stroke-dasharray]="dash()" />
+                  </svg>
+                  <span class="gauge-center" aria-hidden="true">{{ app.riskScore }}</span>
+                </div>
+                <div>
+                  <p class="profile serif">{{ app.riskProfile }}</p>
+                  <p class="muted">{{ labels.risk[app.riskProfile] }}</p>
+                </div>
+              </div>
+              @if (answers().length) {
+                <dl class="answers">
+                  @for (a of answers(); track a.question) {
+                    <div><dt>{{ a.question }}</dt><dd>{{ a.answer }}</dd></div>
+                  }
+                </dl>
+              } @else {
+                <p class="muted">The answer labels couldn’t load.</p>
+              }
+            }
+            @case ('history') {
+              <ol class="timeline">
+                @for (change of history(); track $index) {
+                  <li [attr.data-status]="change.status">
+                    <p class="t-status">{{ labels.status[change.status] }}</p>
+                    <p class="t-date">{{ change.changedAt | date: 'MMM d, y, h:mm a' }}</p>
+                    @if (change.note) { <p class="t-note">{{ change.note }}</p> }
+                  </li>
+                }
+              </ol>
+            }
+          }
+        </div>
+      </section>
+
+      <aside>
         @if (nextStatuses().length) {
           <section class="decision">
-            <div>
-              <h2>Make a decision</h2>
-              <p>This application is {{ labels.status[app.status].toLowerCase() }}.</p>
-            </div>
+            <h2>Make a decision</h2>
+            <p class="lede">Current status: {{ labels.status[app.status] }}.</p>
             <label class="note">
               <span>Note to the file</span>
-              <textarea [(ngModel)]="note" rows="4" placeholder="Required when requesting info"></textarea>
+              <textarea id="decision-note" [(ngModel)]="note" rows="4" placeholder="Required when requesting info"></textarea>
             </label>
             <div class="decision-buttons">
               @for (status of nextStatuses(); track status) {
-                <button type="button" class="decide" [attr.data-status]="status"
-                        [disabled]="saving()" (click)="changeStatus(status)">
-                  @if (status === 'Approved') {
-                    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
-                  }
+                <button type="button" class="decide" [attr.data-status]="status" [disabled]="saving()" (click)="decide(status)">
                   {{ labels.action[status] }}
                 </button>
               }
             </div>
             @if (actionError(); as message) { <p class="decision-error" role="alert">{{ message }}</p> }
           </section>
+        } @else {
+          <section class="card decided">
+            <h2>Decision</h2>
+            <p class="muted">This application was {{ labels.status[app.status].toLowerCase() }}
+              {{ app.history[app.history.length - 1].changedAt | date: 'MMM d, y' }}. No further steps.</p>
+          </section>
         }
-
-        <section class="card history">
-          <h2>History</h2>
-          <ol class="timeline">
-            @for (change of app.history.slice().reverse(); track $index) {
-              <li [attr.data-status]="change.status">
-                <span class="t-dot" aria-hidden="true"><span></span></span>
-                <p class="t-status">{{ labels.status[change.status] }}</p>
-                <p class="t-date">{{ change.changedAt | date: 'MMM d, y, h:mm a' }}</p>
-                @if (change.note) { <p class="t-note">{{ change.note }}</p> }
-              </li>
-            }
-          </ol>
-        </section>
       </aside>
     </div>
+
+    <dialog #declineDialog class="dialog" aria-labelledby="decline-title" (cancel)="cancelDecline()">
+      <form (ngSubmit)="confirmDecline()">
+        <h2 id="decline-title">Decline this application?</h2>
+        <p class="muted">{{ app.personal.firstName }} {{ app.personal.lastName }} will be told the application was declined. This can’t be undone.</p>
+        <label class="field">
+          <span>Reason</span>
+          <select [(ngModel)]="declineReason" name="reason">
+            @for (r of declineReasons; track r) { <option [value]="r">{{ r }}</option> }
+          </select>
+        </label>
+        <label class="field">
+          <span>Note (optional)</span>
+          <textarea [(ngModel)]="note" name="note" rows="3"></textarea>
+        </label>
+        <div class="dialog-actions">
+          <button type="button" class="button secondary" (click)="cancelDecline()">Cancel</button>
+          <button type="submit" class="button danger">Decline application</button>
+        </div>
+      </form>
+    </dialog>
   } @else if (loadError()) {
     <p class="status card" role="alert">This application couldn’t load. It may not exist, or the API restarted
       and cleared its in-memory data.</p>
   } @else {
-    <p class="status card">Loading application…</p>
+    <div class="card loading" aria-busy="true">
+      <span class="visually-hidden">Loading application…</span>
+      <span class="skeleton" style="width: 14rem; height: 1.25rem"></span>
+      <span class="skeleton" style="width: 22rem"></span>
+      <span class="skeleton" style="width: 18rem"></span>
+    </div>
   }
 </div>

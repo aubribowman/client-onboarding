@@ -2,11 +2,12 @@ import { Component, input } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { accountTypeLabels, entries, fundingMethodLabels } from '../../core/labels';
 import { FieldErrorComponent } from '../../shared/field-error.component';
+import { MoneyInputDirective } from '../../shared/formatted-inputs';
 import { OnboardingForm } from '../onboarding-form';
 
 @Component({
   selector: 'app-account-step',
-  imports: [ReactiveFormsModule, FieldErrorComponent],
+  imports: [ReactiveFormsModule, FieldErrorComponent, MoneyInputDirective],
   templateUrl: './account-step.component.html'
 })
 export class AccountStepComponent {

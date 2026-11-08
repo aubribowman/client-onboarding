@@ -15,7 +15,7 @@
     <span>Initial deposit</span>
     <div class="money-input">
       <span aria-hidden="true">$</span>
-      <input formControlName="initialDeposit" type="number" min="1000" step="500" inputmode="numeric" />
+      <input formControlName="initialDeposit" appMoney />
     </div>
     <app-field-error [control]="group().controls.initialDeposit"
                      [messages]="{ required: 'Enter an initial deposit.', min: 'The minimum initial deposit is $1,000.' }" />

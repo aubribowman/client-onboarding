@@ -24,7 +24,7 @@
     <span>Annual income</span>
     <div class="money-input">
       <span aria-hidden="true">$</span>
-      <input formControlName="annualIncome" type="number" min="0" step="1000" inputmode="numeric" />
+      <input formControlName="annualIncome" appMoney />
     </div>
     <app-field-error [control]="group().controls.annualIncome" [messages]="{ required: 'Enter annual income, or 0.' }" />
   </label>
@@ -33,7 +33,7 @@
     <span>Estimated net worth</span>
     <div class="money-input">
       <span aria-hidden="true">$</span>
-      <input formControlName="netWorth" type="number" min="0" step="1000" inputmode="numeric" />
+      <input formControlName="netWorth" appMoney />
     </div>
     <app-field-error [control]="group().controls.netWorth" [messages]="{ required: 'Enter estimated net worth, or 0.' }" />
   </label>

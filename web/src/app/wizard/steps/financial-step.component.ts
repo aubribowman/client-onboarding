@@ -5,13 +5,14 @@ import { startWith } from 'rxjs';
 import { employmentLabels, entries } from '../../core/labels';
 import { EmploymentStatus } from '../../core/models';
 import { FieldErrorComponent } from '../../shared/field-error.component';
+import { MoneyInputDirective } from '../../shared/formatted-inputs';
 import { OnboardingForm } from '../onboarding-form';
 
 const needsEmployer: EmploymentStatus[] = ['Employed', 'SelfEmployed'];
 
 @Component({
   selector: 'app-financial-step',
-  imports: [ReactiveFormsModule, FieldErrorComponent],
+  imports: [ReactiveFormsModule, FieldErrorComponent, MoneyInputDirective],
   templateUrl: './financial-step.component.html'
 })
 export class FinancialStepComponent implements OnInit {

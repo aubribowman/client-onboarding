@@ -14,6 +14,7 @@ import { ReviewStepComponent } from './steps/review-step.component';
 import { RiskStepComponent } from './steps/risk-step.component';
 
 const DRAFT_KEY = 'onboarding-draft';
+const RISK_STEP = 2;
 
 interface Step {
   title: string;
@@ -51,6 +52,12 @@ export class OnboardingWizardComponent implements OnInit {
   readonly current = signal(0);
   readonly furthest = signal(0);
   readonly isLast = computed(() => this.current() === this.steps.length - 1);
+
+  /** Which risk question is showing. Next and Back walk through these first. */
+  readonly riskIndex = signal(0);
+  readonly onEarlierQuestion = computed(
+    () => this.current() === RISK_STEP && this.riskIndex() < this.questions().length - 1
+  );
 
   readonly questions = signal<RiskQuestion[]>([]);
   readonly loadState = signal<'loading' | 'ready' | 'error'>('loading');
@@ -93,10 +100,24 @@ export class OnboardingWizardComponent implements OnInit {
   }
 
   next(): void {
+    if (this.onEarlierQuestion()) {
+      const id = this.questions()[this.riskIndex()].id;
+      const answer = this.form.controls.risk.controls[id];
+      if (answer.invalid) {
+        answer.markAsTouched();
+        this.attempted.set(true);
+        return;
+      }
+      this.attempted.set(false);
+      this.riskIndex.update(i => i + 1);
+      return;
+    }
+
     const control = this.stepControl(this.current());
     if (control.invalid) {
       control.markAllAsTouched();
       this.attempted.set(true);
+      if (this.current() === RISK_STEP) this.showFirstUnanswered();
       return;
     }
     this.attempted.set(false);
@@ -107,13 +128,26 @@ export class OnboardingWizardComponent implements OnInit {
 
   back(): void {
     this.attempted.set(false);
+    if (this.current() === RISK_STEP && this.riskIndex() > 0) {
+      this.riskIndex.update(i => i - 1);
+      return;
+    }
     this.current.update(i => Math.max(0, i - 1));
+    // Coming back into the questionnaire lands on its last question.
+    if (this.current() === RISK_STEP) this.riskIndex.set(this.questions().length - 1);
   }
 
   goTo(index: number): void {
     if (index > this.furthest()) return;
     this.attempted.set(false);
     this.current.set(index);
+    if (index === RISK_STEP) this.showFirstUnanswered();
+  }
+
+  private showFirstUnanswered(): void {
+    const risk = this.form.controls.risk.controls;
+    const i = this.questions().findIndex(q => risk[q.id]?.invalid);
+    this.riskIndex.set(i === -1 ? 0 : i);
   }
 
   submit(): void {
@@ -122,6 +156,7 @@ export class OnboardingWizardComponent implements OnInit {
       const firstInvalid = this.steps.findIndex((_, i) => this.stepControl(i).invalid);
       this.attempted.set(true);
       this.current.set(firstInvalid);
+      if (firstInvalid === RISK_STEP) this.showFirstUnanswered();
       return;
     }
 
@@ -150,6 +185,7 @@ export class OnboardingWizardComponent implements OnInit {
     localStorage.removeItem(DRAFT_KEY);
     this.current.set(0);
     this.furthest.set(0);
+    this.riskIndex.set(0);
     this.restoredDraft.set(false);
     this.draftSavedAt.set(null);
     this.serverErrors.set([]);
@@ -160,15 +196,23 @@ export class OnboardingWizardComponent implements OnInit {
   private startAutosave(): void {
     this.form.valueChanges
       .pipe(debounceTime(600), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        const { acceptedTerms, ...draft } = this.form.getRawValue();
-        try {
-          localStorage.setItem(DRAFT_KEY, JSON.stringify({ draft, furthest: this.furthest() }));
-          this.draftSavedAt.set(new Date());
-        } catch {
-          // Storage can be full or disabled; the form still works without it.
-        }
-      });
+      .subscribe(() => this.saveDraft());
+  }
+
+  private saveDraft(): void {
+    const { acceptedTerms, ...draft } = this.form.getRawValue();
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ draft, furthest: this.furthest() }));
+      this.draftSavedAt.set(new Date());
+    } catch {
+      // Storage can be full or disabled; the form still works without it.
+    }
+  }
+
+  /** Saves right away (autosave waits for a pause in typing), then leaves. */
+  saveAndExit(): void {
+    if (this.form.dirty || this.draftSavedAt() || this.restoredDraft()) this.saveDraft();
+    this.router.navigate(['/applications']);
   }
 
   private restoreDraft(): void {

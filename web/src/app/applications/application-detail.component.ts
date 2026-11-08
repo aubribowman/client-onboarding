@@ -1,6 +1,6 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
@@ -15,9 +15,21 @@ import {
 } from '../core/labels';
 import { ApplicationStatus, ClientApplication, RiskQuestion, ValidationProblem } from '../core/models';
 import { OnboardingApiService } from '../core/onboarding-api.service';
+import { openStatuses } from '../core/queue';
+import { reviewFlags } from '../core/review-flags';
+import { ToastService } from '../shared/toast.service';
 import { StatusBadgeComponent } from './status-badge.component';
 
-const GAUGE_CIRCUMFERENCE = 2 * Math.PI * 56;
+const GAUGE_CIRCUMFERENCE = 2 * Math.PI * 44;
+
+export const declineReasons = [
+  'Couldn’t verify identity',
+  'Risk profile doesn’t suit the account',
+  'Missing or inconsistent information',
+  'Other'
+];
+
+type Tab = 'overview' | 'risk' | 'history';
 
 type StageTone = 'done' | 'info' | 'warn' | 'success' | 'error' | 'upcoming';
 
@@ -27,8 +39,10 @@ type StageTone = 'done' | 'info' | 'warn' | 'success' | 'error' | 'upcoming';
   templateUrl: './application-detail.component.html',
   styleUrl: './application-detail.component.scss'
 })
-export class ApplicationDetailComponent implements OnInit {
+export class ApplicationDetailComponent {
   private readonly api = inject(OnboardingApiService);
+  private readonly toasts = inject(ToastService);
+  private readonly declineDialog = viewChild<ElementRef<HTMLDialogElement>>('declineDialog');
 
   /** Bound from the :id route parameter (withComponentInputBinding). */
   readonly id = input.required<string>();
@@ -41,7 +55,23 @@ export class ApplicationDetailComponent implements OnInit {
   readonly saving = signal(false);
   readonly justSubmitted = signal(!!history.state?.submitted);
   note = '';
+  declineReason = declineReasons[0];
+  readonly declineReasons = declineReasons;
   readonly formatPhone = formatPhone;
+
+  readonly tab = signal<Tab>('overview');
+  readonly tabs: { id: Tab; label: string }[] = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'risk', label: 'Risk answers' },
+    { id: 'history', label: 'History' }
+  ];
+
+  readonly flags = computed(() => {
+    const app = this.application();
+    return app ? reviewFlags(app) : [];
+  });
+
+  readonly history = computed(() => this.application()?.history.slice().reverse() ?? []);
 
   readonly labels = {
     account: accountTypeLabels,
@@ -85,8 +115,18 @@ export class ApplicationDetailComponent implements OnInit {
     return [{ label: 'Submitted', tone: 'done' as StageTone }, review, decision];
   });
 
-  ngOnInit(): void {
-    this.load();
+  constructor() {
+    // "Next in queue" reuses this component with a new id, so reload on every change.
+    effect(() => {
+      this.id();
+      untracked(() => {
+        this.application.set(null);
+        this.loadError.set(false);
+        this.actionError.set(null);
+        this.tab.set('overview');
+        this.load();
+      });
+    });
   }
 
   load(): void {
@@ -110,15 +150,49 @@ export class ApplicationDetailComponent implements OnInit {
     return (app.personal.firstName[0] + app.personal.lastName[0]).toUpperCase();
   }
 
-  changeStatus(status: ApplicationStatus): void {
-    this.saving.set(true);
+  /** Arrow keys move between tabs, as the ARIA tabs pattern expects. */
+  onTabKey(event: KeyboardEvent): void {
+    const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+    if (!step) return;
+    const i = this.tabs.findIndex(t => t.id === this.tab());
+    const next = this.tabs[(i + step + this.tabs.length) % this.tabs.length];
+    this.tab.set(next.id);
+    document.getElementById('tab-' + next.id)?.focus();
+  }
+
+  decide(status: ApplicationStatus): void {
     this.actionError.set(null);
-    this.api.changeStatus(this.id(), status, this.note.trim() || null).subscribe({
+    if (status === 'Declined') {
+      this.declineDialog()?.nativeElement.showModal();
+      return;
+    }
+    if (status === 'NeedsInfo' && !this.note.trim()) {
+      this.actionError.set('Add a note that tells the client what’s needed.');
+      document.getElementById('decision-note')?.focus();
+      return;
+    }
+    this.changeStatus(status, this.note.trim() || null);
+  }
+
+  confirmDecline(): void {
+    this.declineDialog()?.nativeElement.close();
+    const extra = this.note.trim();
+    this.changeStatus('Declined', `Reason: ${this.declineReason}.${extra ? ' ' + extra : ''}`);
+  }
+
+  cancelDecline(): void {
+    this.declineDialog()?.nativeElement.close();
+  }
+
+  private changeStatus(status: ApplicationStatus, note: string | null): void {
+    this.saving.set(true);
+    this.api.changeStatus(this.id(), status, note).subscribe({
       next: () => {
         this.note = '';
         this.saving.set(false);
         this.justSubmitted.set(false);
         this.load();
+        this.announce(status);
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
@@ -127,6 +201,27 @@ export class ApplicationDetailComponent implements OnInit {
           problem?.errors ? Object.values(problem.errors).flat().join(' ') : problem?.detail ?? 'The status didn’t change. Try again.'
         );
       }
+    });
+  }
+
+  /** Confirms the change, and offers the oldest open application still waiting. */
+  private announce(status: ApplicationStatus): void {
+    const name = this.application()?.personal.firstName ?? 'The client';
+    const message =
+      status === 'Approved' ? `${name}’s application was approved.`
+      : status === 'Declined' ? `${name}’s application was declined.`
+      : status === 'NeedsInfo' ? `Info requested from ${name}.`
+      : `Review started for ${name}.`;
+    const done = status !== 'InReview';
+    this.api.list(null).pipe(catchError(() => of([]))).subscribe(items => {
+      const next = items
+        .filter(a => a.id !== this.id() && openStatuses.includes(a.status) && a.status !== 'NeedsInfo')
+        .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))[0];
+      this.toasts.show({
+        message,
+        tone: 'success',
+        link: done && next ? { label: 'Next in queue', commands: ['/applications', next.id] } : undefined
+      });
     });
   }
 }
