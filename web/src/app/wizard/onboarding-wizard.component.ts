@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { debounceTime } from 'rxjs';
 import { RiskQuestion, ValidationProblem } from '../core/models';
 import { OnboardingApiService } from '../core/onboarding-api.service';
+import { DRAFT_KEY } from './draft';
 import { createOnboardingForm, toRequest } from './onboarding-form';
 import { AccountStepComponent } from './steps/account-step.component';
 import { FinancialStepComponent } from './steps/financial-step.component';
@@ -13,7 +14,6 @@ import { PersonalStepComponent } from './steps/personal-step.component';
 import { ReviewStepComponent } from './steps/review-step.component';
 import { RiskStepComponent } from './steps/risk-step.component';
 
-const DRAFT_KEY = 'onboarding-draft';
 const RISK_STEP = 2;
 
 interface Step {
@@ -209,10 +209,11 @@ export class OnboardingWizardComponent implements OnInit {
     }
   }
 
-  /** Saves right away (autosave waits for a pause in typing), then leaves. */
+  /** Saves right away (autosave waits for a pause in typing), then goes home,
+      where the draft can be picked up again. */
   saveAndExit(): void {
     if (this.form.dirty || this.draftSavedAt() || this.restoredDraft()) this.saveDraft();
-    this.router.navigate(['/applications']);
+    this.router.navigate(['/']);
   }
 
   private restoreDraft(): void {

@@ -10,10 +10,10 @@ describe('AppComponent', () => {
     }).compileComponents();
   });
 
-  it('renders both navigation links', () => {
+  it('renders the navigation links', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const links = (fixture.nativeElement as HTMLElement).querySelectorAll('nav a');
-    expect(Array.from(links).map(a => a.textContent?.trim())).toEqual(['New application', 'Review queue']);
+    expect(Array.from(links).map(a => a.textContent?.trim())).toEqual(['Home', 'New application', 'Review queue']);
   });
 });

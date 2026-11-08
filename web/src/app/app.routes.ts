@@ -4,6 +4,11 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
+    title: 'Home',
+    loadComponent: () => import('./home/home.component').then(m => m.HomeComponent)
+  },
+  {
+    path: 'new',
     title: 'New application',
     loadComponent: () => import('./wizard/onboarding-wizard.component').then(m => m.OnboardingWizardComponent)
   },

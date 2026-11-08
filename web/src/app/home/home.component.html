@@ -1,0 +1,94 @@
+<div class="page">
+  <header>
+    <p class="label-caps">{{ today | date: 'EEEE, MMMM d' }}</p>
+    <h1 class="page-title">{{ greeting }}</h1>
+    <p class="page-lede">
+      @switch (queue().kind) {
+        @case ('ready') {
+          @if (needsDecision() === 0) {
+            Nothing is waiting on a decision right now.
+          } @else {
+            {{ needsDecision() }} {{ needsDecision() === 1 ? 'application needs' : 'applications need' }} a decision{{ overdue() ? ', and ' + overdue() + ' ' + (overdue() === 1 ? 'has' : 'have') + ' waited 4+ days' : '' }}.
+          }
+        }
+        @case ('error') { Start a new application or open the review queue. }
+        @default { Checking the review queue… }
+      }
+    </p>
+  </header>
+
+  <div class="actions">
+    <a [routerLink]="['/new']" class="action card">
+      <span class="icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      </span>
+      <span class="text">
+        @if (draft; as d) {
+          <span class="title serif">Continue {{ d.clientName ? d.clientName + '’s' : 'your' }} application</span>
+          <span class="desc">Saved on this device. Reached step {{ d.stepsReached }} of 5.</span>
+        } @else {
+          <span class="title serif">Start a new application</span>
+          <span class="desc">Five steps: client details, finances, risk questions, account, review.</span>
+        }
+      </span>
+      <span class="arrow" aria-hidden="true">→</span>
+    </a>
+
+    <a routerLink="/applications" class="action card">
+      <span class="icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg>
+      </span>
+      <span class="text">
+        <span class="title serif">Open the review queue</span>
+        <span class="desc">
+          @if (queue().kind === 'ready') {
+            {{ needsDecision() }} to decide · {{ counts().NeedsInfo }} waiting on the client · {{ counts().Approved + counts().Declined }} decided
+          } @else {
+            Every submitted application, with filters and sorting.
+          }
+        </span>
+      </span>
+      <span class="arrow" aria-hidden="true">→</span>
+    </a>
+  </div>
+
+  <section class="card attention" aria-labelledby="attention-title">
+    <div class="attention-head">
+      <h2 id="attention-title">Needs attention</h2>
+      <a routerLink="/applications">See all</a>
+    </div>
+
+    @switch (queue().kind) {
+      @case ('loading') {
+        <ul aria-hidden="true">
+          @for (n of [1, 2, 3]; track n) {
+            <li class="row"><span class="skeleton" style="width: 12rem"></span><span class="skeleton" style="width: 5rem; margin-left: auto"></span></li>
+          }
+        </ul>
+      }
+      @case ('error') {
+        <p class="empty" role="alert">The review queue couldn’t load. Check that the API is running on port 5044.</p>
+      }
+      @default {
+        @if (attention().length === 0) {
+          <p class="empty">All caught up. New applications will show up here.</p>
+        } @else {
+          <ul>
+            @for (app of attention(); track app.id) {
+              <li class="row">
+                <span class="who">
+                  <a [routerLink]="['/applications', app.id]" class="name">{{ app.clientName }}</a>
+                  <span class="meta num">{{ app.referenceNumber }} · {{ app.initialDeposit | currency: 'USD' : 'symbol' : '1.0-0' }}</span>
+                </span>
+                <app-status-badge [status]="app.status" />
+                <span class="wait num" [attr.data-tone]="app.tone">
+                  {{ app.waiting === 0 ? 'Today' : app.waiting + (app.waiting === 1 ? ' day' : ' days') }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
+  </section>
+</div>

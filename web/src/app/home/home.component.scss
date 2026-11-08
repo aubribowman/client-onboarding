@@ -1,0 +1,84 @@
+.page { max-width: 60rem; margin: 0 auto; display: grid; gap: 1.5rem; }
+
+.page-title { margin-top: 0.25rem; }
+
+.actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; }
+
+.action {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 120ms ease, background 120ms ease;
+
+  &:hover { color: var(--ink); border-color: var(--accent); background: var(--accent-tint); .arrow { transform: translateX(3px); color: var(--accent); } }
+}
+
+.icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
+.text { display: grid; gap: 0.25rem; flex: 1; }
+.title { font-size: 1.1875rem; line-height: 1.25; }
+.desc { font-size: 0.875rem; color: var(--ink-muted); }
+.arrow { align-self: center; font-size: 1.25rem; color: var(--ink-faint); transition: transform 120ms ease; }
+
+.attention { overflow: hidden; }
+
+.attention-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--rule);
+
+  h2 { margin: 0; font-size: 1.125rem; }
+  a { font-size: 0.875rem; font-weight: 500; }
+}
+
+ul { margin: 0; padding: 0; list-style: none; }
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid var(--rule-soft);
+
+  &:first-child { border-top: 0; }
+  &:hover { background: var(--surface-sunk); .name { color: var(--accent); } }
+}
+
+.who { display: grid; flex: 1; min-width: 0; line-height: 1.3; }
+.name { color: var(--ink); font-weight: 600; text-decoration: none; }
+/* The name link covers the whole row. */
+.name::after { content: ''; position: absolute; inset: 0; }
+.meta { font-size: 0.8125rem; color: var(--ink-muted); }
+
+.wait {
+  width: 4.5rem;
+  text-align: right;
+  font-size: 0.875rem;
+  font-weight: 600;
+  &[data-tone='ok'] { color: var(--ink-muted); font-weight: 500; }
+  &[data-tone='warn'] { color: var(--warn); }
+  &[data-tone='late'] { color: var(--error); }
+}
+
+.empty { margin: 0; padding: 1.5rem 1.25rem; color: var(--ink-muted); }
+
+@media (max-width: 640px) {
+  .row { flex-wrap: wrap; gap: 0.5rem 1rem; }
+  .who { flex-basis: 100%; }
+  .wait { width: auto; margin-left: auto; }
+}
