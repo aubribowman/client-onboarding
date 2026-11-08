@@ -4,15 +4,38 @@ A full-stack onboarding tool for a fictional wealth management firm, Harbor Poin
 
 Built with **Angular 19** and **ASP.NET Core 8 Web API**.
 
-<!-- Add screenshots here: wizard, risk step, review queue, detail page -->
+![Home page with a summary of the review queue and the applications that need attention](docs/screenshots/home.png)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/risk-step.png" alt="Risk questionnaire showing one question at a time, with a running score and answer summary"></td>
+    <td width="50%"><img src="docs/screenshots/review-queue.png" alt="Review queue with status filters, sortable columns and days waiting"></td>
+  </tr>
+  <tr>
+    <td><b>Risk questionnaire.</b> One question at a time, with keyboard shortcuts and a live profile preview.</td>
+    <td><b>Review queue.</b> Status filters, sorting, and how long each application has waited.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/application-detail.png" alt="Application detail with review flags, tabs and the decision panel"></td>
+    <td width="50%" align="center"><img src="docs/screenshots/home-mobile.png" alt="Home page on a phone" width="150"></td>
+  </tr>
+  <tr>
+    <td><b>Application detail.</b> Flags for the reviewer to check, and only the decisions the current status allows.</td>
+    <td><b>On a phone.</b> Every screen works down to 375px wide.</td>
+  </tr>
+</table>
+
+<sub>Screenshots use fictional demo data.</sub>
 
 ## What it does
 
-- **Multi-step application** with per-step validation, a progress rail you can use to jump back to finished steps, and an editable summary before submitting.
-- **Risk questionnaire** served by the API, with a live profile preview (Conservative, Moderate, Growth, Aggressive) that updates as answers change.
-- **Draft autosave**: progress is saved in the browser, so refreshing the page doesn’t lose a half-finished application.
-- **Review queue** with status filtering, and a detail page with a status history timeline.
-- **Review workflow rules** enforced on the server: an application has to be in review before it can be approved, and requesting info requires a note.
+- **Home page** that summarizes the review queue, lists the applications waiting longest, and picks up an unfinished application where it left off.
+- **Multi-step application** with per-step validation, a stepper you can use to jump back to finished steps, formatted phone and money inputs, and an editable summary before submitting.
+- **Risk questionnaire** served by the API, shown one question at a time (number keys 1–4 pick an answer), with a live profile preview (Conservative, Moderate, Growth, Aggressive).
+- **Draft autosave**: progress is saved in the browser, so refreshing the page or choosing “Save and exit” doesn’t lose a half-finished application.
+- **Review queue** with status filters, search, sorting by deposit or wait time, and days-waiting warnings at 2 and 4 days.
+- **Application detail** with Overview, Risk answers and History tabs, plus “Things to check” flags (for example, a deposit that is most of the client’s savings, or a trust account that needs documents).
+- **Review workflow rules** enforced on the server: an application has to be in review before it can be approved, and requesting info requires a note. Declining asks for confirmation and a reason.
 
 ## Tech stack
 
@@ -20,7 +43,7 @@ Built with **Angular 19** and **ASP.NET Core 8 Web API**.
 | --- | --- |
 | Front end | Angular 19 (standalone components, signals, new `@if`/`@for` control flow), typed reactive forms, RxJS, SCSS |
 | Back end | ASP.NET Core 8 Web API, controllers, DataAnnotations validation, dependency injection |
-| Testing | Jasmine + Karma (validators, scoring, form-to-request mapping, app shell) |
+| Testing | Jasmine + Karma (validators, scoring, form-to-request mapping, review flags, queue timing, input formatting, drafts, app shell) |
 
 ## Running it locally
 
@@ -76,9 +99,12 @@ api/
   Models/        Request DTOs and stored records
 web/src/app/
   core/          API service, models, validators, display labels, risk scoring
-  wizard/        The five-step application and its step components
+  home/          Home page
+  wizard/        The five-step application, its step components and draft storage
   applications/  Review queue and application detail
-  shared/        Field error messages
+  shared/        Field errors, formatted inputs, toast notices
+docs/
+  screenshots/   Images used in this README
 ```
 
 ## Roadmap

@@ -62,5 +62,8 @@ export class HomeComponent {
       .slice(0, 5)
   );
 
-  readonly overdue = computed(() => this.attention().filter(a => a.tone === 'late').length);
+  /** Applications needing a decision that have waited four days or more. */
+  readonly overdue = computed(
+    () => this.items().filter(a => a.status !== 'NeedsInfo' && waitingTone(daysWaiting(a)) === 'late').length
+  );
 }
