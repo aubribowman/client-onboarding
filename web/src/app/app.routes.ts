@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 
 // Lazy-loaded routes: each screen's code downloads only when it's visited.
+// `title` sets the browser tab title. The detail page receives `:id` as a
+// component input (see withComponentInputBinding in app.config.ts).
 export const routes: Routes = [
   {
     path: '',
@@ -22,5 +24,6 @@ export const routes: Routes = [
     title: 'Application',
     loadComponent: () => import('./applications/application-detail.component').then(m => m.ApplicationDetailComponent)
   },
+  // Unknown URLs go back to the home page.
   { path: '**', redirectTo: '' }
 ];

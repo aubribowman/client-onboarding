@@ -5,6 +5,8 @@ import { RiskProfile } from './models';
 // with api/Services/RiskQuestionnaire.cs.
 export const riskProfiles: RiskProfile[] = ['Conservative', 'Moderate', 'Growth', 'Aggressive'];
 
+/** Sums the answers (each 1-4) into a score and profile.
+    Returns null until every question has an answer. */
 export function scoreRisk(values: (number | null)[]): { score: number; profile: RiskProfile } | null {
   if (values.length === 0 || values.some(v => v === null)) return null;
   const score = (values as number[]).reduce((sum, v) => sum + v, 0);

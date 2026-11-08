@@ -35,6 +35,9 @@ public static class RiskQuestionnaire
         ])
     ];
 
+    // Five questions, 5-20 points. Keep these thresholds in sync with
+    // web/src/app/core/risk.ts, which shows a preview while the client answers.
+    // Question ids are also used in web/src/app/core/review-flags.ts.
     public static RiskResult Score(IEnumerable<RiskAnswer> answers)
     {
         var score = answers.Sum(a => a.Value);

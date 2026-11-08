@@ -2,6 +2,9 @@ import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ToastService } from './toast.service';
 
+/** Renders ToastService's current notice at the bottom of the screen.
+    The region is always present with aria-live, so screen readers announce
+    each new message. Placed once in app.component.html. */
 @Component({
   selector: 'app-toast',
   imports: [RouterLink],

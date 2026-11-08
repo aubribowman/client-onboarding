@@ -1,3 +1,6 @@
+// Rules for the "Worth a closer look" box on the detail page. Each rule
+// is a plain if-statement; to add one, push another ReviewFlag below and
+// add a case to review-flags.spec.ts.
 import { ClientApplication } from './models';
 
 export interface ReviewFlag {
@@ -8,6 +11,8 @@ export interface ReviewFlag {
 
 type FlagInput = Pick<ClientApplication, 'account' | 'financial' | 'riskAnswers' | 'riskProfile'>;
 
+// The client's answer to one risk question, or null if it's missing.
+// Question ids come from api/Services/RiskQuestionnaire.cs.
 const answer = (app: FlagInput, id: string) => app.riskAnswers.find(a => a.questionId === id)?.value ?? null;
 
 /** Things a reviewer should check by hand. None of them block a decision. */
@@ -16,6 +21,7 @@ export function reviewFlags(app: FlagInput): ReviewFlag[] {
   const { initialDeposit, accountType } = app.account;
   const { netWorth } = app.financial;
 
+  // Liquidity answers: 1 = over 75% of savings, 2 = 50-75%.
   const liquidity = answer(app, 'liquidity');
   if (liquidity !== null && liquidity <= 2) {
     flags.push({
@@ -33,6 +39,7 @@ export function reviewFlags(app: FlagInput): ReviewFlag[] {
     });
   }
 
+  // Horizon answer 1 = withdrawing within 2 years.
   const horizon = answer(app, 'horizon');
   if (horizon === 1 && (app.riskProfile === 'Growth' || app.riskProfile === 'Aggressive')) {
     flags.push({

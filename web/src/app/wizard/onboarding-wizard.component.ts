@@ -14,6 +14,9 @@ import { PersonalStepComponent } from './steps/personal-step.component';
 import { ReviewStepComponent } from './steps/review-step.component';
 import { RiskStepComponent } from './steps/risk-step.component';
 
+// Index of the risk questionnaire in `steps`. That step has its own
+// inner navigation (one question at a time), so several methods below
+// treat it specially.
 const RISK_STEP = 2;
 
 interface Step {
@@ -21,6 +24,11 @@ interface Step {
   description: string;
 }
 
+/** The five-step "New application" wizard (route /new).
+    This component owns the form, the current step, draft saving, and
+    submitting. Each step component only renders its own part of the form.
+    Flow: load risk questions -> restore any saved draft -> autosave while
+    the person works -> submit -> go to the new application's detail page. */
 @Component({
   selector: 'app-onboarding-wizard',
   imports: [
@@ -49,7 +57,9 @@ export class OnboardingWizardComponent implements OnInit {
     { title: 'Review and submit', description: 'Check everything before sending the application for review.' }
   ];
 
+  /** The step on screen (index into `steps`). */
   readonly current = signal(0);
+  /** The furthest step reached. The stepper only lets people jump back to steps up to here. */
   readonly furthest = signal(0);
   readonly isLast = computed(() => this.current() === this.steps.length - 1);
 
@@ -59,11 +69,15 @@ export class OnboardingWizardComponent implements OnInit {
     () => this.current() === RISK_STEP && this.riskIndex() < this.questions().length - 1
   );
 
+  /** Risk questions come from the API, so the questionnaire can change without a front-end release. */
   readonly questions = signal<RiskQuestion[]>([]);
   readonly loadState = signal<'loading' | 'ready' | 'error'>('loading');
+  /** True after a failed Next, so the current step shows its errors. */
   readonly attempted = signal(false);
   readonly submitting = signal(false);
+  /** Validation messages the API sent back on submit. */
   readonly serverErrors = signal<string[]>([]);
+  /** Drives the "Picked up where you left off" / "Draft saved" note in the header. */
   readonly restoredDraft = signal(false);
   readonly draftSavedAt = signal<Date | null>(null);
 
@@ -89,6 +103,7 @@ export class OnboardingWizardComponent implements OnInit {
     });
   }
 
+  /** The part of the form each step is responsible for. Keep in step order. */
   private stepControl(index: number): AbstractControl {
     const c = this.form.controls;
     return [c.personal, c.financial, c.risk, c.account, c.acceptedTerms][index];
@@ -99,6 +114,8 @@ export class OnboardingWizardComponent implements OnInit {
     return this.stepControl(index).valid;
   }
 
+  /** The primary button. On the risk step it first walks through the questions;
+      otherwise it validates the current step before moving on. */
   next(): void {
     if (this.onEarlierQuestion()) {
       const id = this.questions()[this.riskIndex()].id;
@@ -137,6 +154,7 @@ export class OnboardingWizardComponent implements OnInit {
     if (this.current() === RISK_STEP) this.riskIndex.set(this.questions().length - 1);
   }
 
+  /** Jump from the stepper or a review-page "Edit" link. Steps not yet reached are locked. */
   goTo(index: number): void {
     if (index > this.furthest()) return;
     this.attempted.set(false);
@@ -151,6 +169,8 @@ export class OnboardingWizardComponent implements OnInit {
   }
 
   submit(): void {
+    // Safety net: if anything is still invalid, send the person to the first
+    // step with a problem instead of submitting.
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       const firstInvalid = this.steps.findIndex((_, i) => this.stepControl(i).invalid);
@@ -166,10 +186,13 @@ export class OnboardingWizardComponent implements OnInit {
     this.api.submit(toRequest(this.form.getRawValue())).subscribe({
       next: application => {
         localStorage.removeItem(DRAFT_KEY);
+        // `submitted` tells the detail page to show its confirmation banner.
         this.router.navigate(['/applications', application.id], { state: { submitted: true } });
       },
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
+        // A 400 carries field errors from the API's validation; anything
+        // else (no response, 500) gets a generic message.
         const problem = err.error as ValidationProblem | null;
         this.serverErrors.set(
           problem?.errors
@@ -200,6 +223,8 @@ export class OnboardingWizardComponent implements OnInit {
   }
 
   private saveDraft(): void {
+    // Terms acceptance is left out on purpose: the person should agree
+    // again in the session where they actually submit.
     const { acceptedTerms, ...draft } = this.form.getRawValue();
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({ draft, furthest: this.furthest() }));
@@ -216,6 +241,7 @@ export class OnboardingWizardComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
+  /** Loads a saved draft, if there is one. A corrupt draft is thrown away. */
   private restoreDraft(): void {
     try {
       const saved = localStorage.getItem(DRAFT_KEY);

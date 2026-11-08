@@ -53,6 +53,7 @@ export function formatPhone(digits: string): string {
   return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : digits;
 }
 
+/** Turns a label map into a list for @for loops over chips and <select> options. */
 export function entries<K extends string>(labels: Record<K, string>): { value: K; label: string }[] {
   return (Object.keys(labels) as K[]).map(value => ({ value, label: labels[value] }));
 }

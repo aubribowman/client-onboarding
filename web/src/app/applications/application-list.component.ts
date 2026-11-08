@@ -19,11 +19,14 @@ type ListState =
 type Filter = 'Open' | 'All' | ApplicationStatus;
 type SortKey = 'submitted' | 'deposit' | 'waiting';
 
+/** A table row: the API summary plus the "Waiting" column, worked out here. */
 interface Row extends ApplicationSummary {
   waiting: number | null;
   tone: ReturnType<typeof waitingTone>;
 }
 
+/** The review queue (route /applications): status filter chips, a search
+    box, a sortable table, and a summary strip. Rows link to the detail page. */
 @Component({
   selector: 'app-application-list',
   imports: [RouterLink, CurrencyPipe, DatePipe, StatusBadgeComponent],
@@ -37,7 +40,9 @@ export class ApplicationListComponent {
   readonly filter = signal<Filter>('Open');
   readonly query = signal('');
   readonly sort = signal<{ key: SortKey; desc: boolean }>({ key: 'submitted', desc: true });
+  /** Bars in the small risk meter (Conservative = 1 ... Aggressive = 4). */
   readonly levels = [1, 2, 3, 4];
+  /** Placeholder rows shown while the list loads. */
   readonly skeletonRows = [1, 2, 3, 4, 5];
 
   // A single status is filtered by the API. "Open" and "All" fetch
@@ -67,8 +72,8 @@ export class ApplicationListComponent {
 
   readonly total = computed(() => this.all()?.length ?? null);
 
-  /** Open items that have waited four days or more. */
-  readonly overdue = computed(() => (this.all() ?? []).filter(a => (daysWaiting(a) ?? 0) >= 4).length);
+  /** Open items late enough to show red (four days or more, set in core/queue.ts). */
+  readonly overdue = computed(() => (this.all() ?? []).filter(a => waitingTone(daysWaiting(a)) === 'late').length);
 
   readonly chips = computed(() => {
     const known = this.all() !== null;
@@ -100,15 +105,18 @@ export class ApplicationListComponent {
     return rows.sort((a, b) => (desc ? value(b) - value(a) : value(a) - value(b)));
   });
 
+  /** Clicking the active column flips the direction; a new column starts descending. */
   sortBy(key: SortKey): void {
     this.sort.update(s => (s.key === key ? { key, desc: !s.desc } : { key, desc: true }));
   }
 
+  /** Value for the column header's aria-sort, so screen readers announce the sort. */
   ariaSort(key: SortKey): 'ascending' | 'descending' | null {
     const s = this.sort();
     return s.key === key ? (s.desc ? 'descending' : 'ascending') : null;
   }
 
+  /** "Maya Okafor" -> "MO", for the avatar circle. */
   initials(name: string): string {
     const parts = name.trim().split(/\s+/);
     return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();

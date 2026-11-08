@@ -2,6 +2,8 @@ import { Component, input } from '@angular/core';
 import { statusLabels } from '../core/labels';
 import { ApplicationStatus } from '../core/models';
 
+/** Colored pill for an application's status. Colors come from the
+    --info/--warn/--success/--error tokens, so they follow the theme. */
 @Component({
   selector: 'app-status-badge',
   template: `<span class="badge" [attr.data-status]="status()"><span class="dot" aria-hidden="true"></span>{{ labels[status()] }}</span>`,

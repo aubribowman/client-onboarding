@@ -10,6 +10,7 @@ public class OnboardingRequest
     [Required] public FinancialInfo Financial { get; init; } = default!;
     [Required, MinLength(1)] public List<RiskAnswer> RiskAnswers { get; init; } = [];
     [Required] public AccountSetup Account { get; init; } = default!;
+    // Must be true; checked in OnboardingService.Validate.
     public bool AcceptedTerms { get; init; }
 }
 
@@ -18,6 +19,7 @@ public class PersonalInfo
     [Required, StringLength(50)] public string FirstName { get; init; } = "";
     [Required, StringLength(50)] public string LastName { get; init; } = "";
     [Required, EmailAddress] public string Email { get; init; } = "";
+    // The client strips formatting, so "(615) 555-0100" arrives as "6155550100".
     [Required, RegularExpression(@"^\d{10}$", ErrorMessage = "Phone must be 10 digits.")]
     public string Phone { get; init; } = "";
     [Required] public DateOnly DateOfBirth { get; init; }
@@ -32,6 +34,7 @@ public class PersonalInfo
 public class FinancialInfo
 {
     [Required] public EmploymentStatus EmploymentStatus { get; init; }
+    // Required only for employed and self-employed clients; checked in OnboardingService.Validate.
     [StringLength(100)] public string? Employer { get; init; }
     [Range(0, 100_000_000)] public decimal AnnualIncome { get; init; }
     [Range(0, 1_000_000_000)] public decimal NetWorth { get; init; }
@@ -40,6 +43,7 @@ public class FinancialInfo
 public class RiskAnswer
 {
     [Required] public string QuestionId { get; init; } = "";
+    // 1 = most cautious answer, 4 = most risk-tolerant.
     [Range(1, 4)] public int Value { get; init; }
 }
 

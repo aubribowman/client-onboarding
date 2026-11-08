@@ -3,6 +3,11 @@ using OnboardingApi.Models;
 
 namespace OnboardingApi.Services;
 
+/// <summary>
+/// The business logic behind the controller: validation rules, scoring,
+/// reference numbers, and recording status changes. Storage is behind
+/// IApplicationRepository, so this class doesn't care where data lives.
+/// </summary>
 public class OnboardingService(IApplicationRepository repository, TimeProvider clock)
 {
     public const int MinimumAge = 18;
@@ -25,8 +30,11 @@ public class OnboardingService(IApplicationRepository repository, TimeProvider c
             yield return problem;
     }
 
+    /// <summary>Scores the answers and stores a new application with status Submitted.
+    /// Call Validate first; this method assumes the request is valid.</summary>
     public async Task<ClientApplication> SubmitAsync(OnboardingRequest request)
     {
+        // The score is always recalculated here; the client's preview is never trusted.
         var risk = RiskQuestionnaire.Score(request.RiskAnswers);
         var now = clock.GetUtcNow();
         var sequence = await repository.NextSequenceAsync();
@@ -58,6 +66,8 @@ public class OnboardingService(IApplicationRepository repository, TimeProvider c
 
     public Task<ClientApplication?> GetAsync(Guid id) => repository.GetAsync(id);
 
+    /// <summary>Sets the new status and appends it to the history. The controller
+    /// has already checked the move is allowed.</summary>
     public async Task<ClientApplication> ChangeStatusAsync(ClientApplication application, StatusUpdateRequest update)
     {
         application.Status = update.Status;

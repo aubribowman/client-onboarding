@@ -20,8 +20,10 @@ import { reviewFlags } from '../core/review-flags';
 import { ToastService } from '../shared/toast.service';
 import { StatusBadgeComponent } from './status-badge.component';
 
+// The risk gauge is an SVG circle with r=44; see .gauge in styles.scss.
 const GAUGE_CIRCUMFERENCE = 2 * Math.PI * 44;
 
+/** Choices in the Decline dialog. The pick is saved at the start of the history note. */
 export const declineReasons = [
   'Couldn’t verify identity',
   'Risk profile doesn’t suit the account',
@@ -33,6 +35,10 @@ type Tab = 'overview' | 'risk' | 'history';
 
 type StageTone = 'done' | 'info' | 'warn' | 'success' | 'error' | 'upcoming';
 
+/** One application (route /applications/:id). The left side shows the
+    client's details in tabs; the right side is the reviewer's decision card
+    with one button per status the API allows next. After a decision, a toast
+    offers the next application in the queue. */
 @Component({
   selector: 'app-application-detail',
   imports: [RouterLink, CurrencyPipe, DatePipe, FormsModule, StatusBadgeComponent],
@@ -53,7 +59,9 @@ export class ApplicationDetailComponent {
   readonly loadError = signal(false);
   readonly actionError = signal<string | null>(null);
   readonly saving = signal(false);
+  /** True when the wizard just sent us here; shows a "Submitted" banner. */
   readonly justSubmitted = signal(!!history.state?.submitted);
+  // Plain fields (not signals) because they're bound with ngModel.
   note = '';
   declineReason = declineReasons[0];
   readonly declineReasons = declineReasons;
@@ -71,6 +79,7 @@ export class ApplicationDetailComponent {
     return app ? reviewFlags(app) : [];
   });
 
+  /** Newest first for the History tab. slice() so the original isn't reversed in place. */
   readonly history = computed(() => this.application()?.history.slice().reverse() ?? []);
 
   readonly labels = {
@@ -82,6 +91,7 @@ export class ApplicationDetailComponent {
     risk: riskProfileDescriptions
   };
 
+  // Falls back to 5 questions if the questionnaire didn't load.
   readonly maxScore = computed(() => (this.questions().length || 5) * 4);
 
   readonly dash = computed(() => {
@@ -117,6 +127,8 @@ export class ApplicationDetailComponent {
 
   constructor() {
     // "Next in queue" reuses this component with a new id, so reload on every change.
+    // Only id() is tracked; untracked() keeps the signals written below
+    // from re-triggering this effect.
     effect(() => {
       this.id();
       untracked(() => {
@@ -160,6 +172,8 @@ export class ApplicationDetailComponent {
     document.getElementById('tab-' + next.id)?.focus();
   }
 
+  /** A decision button was pressed. Decline asks for a reason first, and
+      Request info needs a note so the client knows what to send. */
   decide(status: ApplicationStatus): void {
     this.actionError.set(null);
     if (status === 'Declined') {
@@ -184,6 +198,7 @@ export class ApplicationDetailComponent {
     this.declineDialog()?.nativeElement.close();
   }
 
+  /** Sends the decision, then reloads so the status, history and buttons update. */
   private changeStatus(status: ApplicationStatus, note: string | null): void {
     this.saving.set(true);
     this.api.changeStatus(this.id(), status, note).subscribe({
@@ -212,6 +227,9 @@ export class ApplicationDetailComponent {
       : status === 'Declined' ? `${name}’s application was declined.`
       : status === 'NeedsInfo' ? `Info requested from ${name}.`
       : `Review started for ${name}.`;
+    // "Start review" means the reviewer is staying on this application,
+    // so only finished decisions offer the next one. Applications waiting
+    // on the client (NeedsInfo) are skipped.
     const done = status !== 'InReview';
     this.api.list(null).pipe(catchError(() => of([]))).subscribe(items => {
       const next = items

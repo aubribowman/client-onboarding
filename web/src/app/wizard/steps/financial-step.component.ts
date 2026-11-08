@@ -10,6 +10,7 @@ import { OnboardingForm } from '../onboarding-form';
 
 const needsEmployer: EmploymentStatus[] = ['Employed', 'SelfEmployed'];
 
+/** Step 2: employment, income, and net worth. */
 @Component({
   selector: 'app-financial-step',
   imports: [ReactiveFormsModule, FieldErrorComponent, MoneyInputDirective],

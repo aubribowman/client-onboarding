@@ -38,6 +38,9 @@ export function createOnboardingForm(fb: FormBuilder) {
 export type OnboardingForm = ReturnType<typeof createOnboardingForm>;
 export type OnboardingFormValue = ReturnType<OnboardingForm['getRawValue']>;
 
+/** Converts the form's value into the shape the API expects: phone as
+    digits only, state uppercased, employer dropped when it doesn't apply,
+    and the risk record flattened into a list of answers. */
 export function toRequest(value: OnboardingFormValue): OnboardingRequest {
   const { personal, financial, account, risk } = value;
   const needsEmployer = financial.employmentStatus === 'Employed' || financial.employmentStatus === 'SelfEmployed';

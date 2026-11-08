@@ -3,6 +3,10 @@ using OnboardingApi.Models;
 namespace OnboardingApi.Services;
 
 // A small state machine: which review statuses can follow which.
+//   Submitted -> InReview -> Approved | Declined | NeedsInfo
+//   NeedsInfo -> InReview (once the client responds)
+// Approved and Declined are final. To add a step, add it to the enum and here;
+// the detail page picks up new buttons from the next-statuses endpoint.
 public static class StatusRules
 {
     private static readonly Dictionary<ApplicationStatus, ApplicationStatus[]> Allowed = new()

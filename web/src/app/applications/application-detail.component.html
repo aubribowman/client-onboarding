@@ -12,6 +12,7 @@
       </div>
     }
 
+    <!-- Client name, reference, key facts and the three-stage tracker. -->
     <header class="hero card">
       <div class="who">
         <span class="avatar" aria-hidden="true">{{ initials(app) }}</span>
@@ -37,6 +38,7 @@
       </ol>
     </header>
 
+    <!-- Rules from core/review-flags.ts. Advisory only; they never block a decision. -->
     @if (flags().length) {
       <section class="flags" aria-labelledby="flags-title">
         <p id="flags-title" class="label-caps">Things to check</p>
@@ -49,6 +51,7 @@
     }
 
     <div class="detail-grid">
+      <!-- Tabs follow the ARIA tabs pattern: arrow keys move between them (onTabKey). -->
       <section class="card tabs-card">
         <div class="tabs" role="tablist" aria-label="Application sections" (keydown)="onTabKey($event)">
           @for (t of tabs; track t.id) {
@@ -125,6 +128,8 @@
         </div>
       </section>
 
+      <!-- Decision card. The buttons come from the API (next-statuses), so the allowed
+           moves are defined in one place: api/Services/StatusRules.cs. -->
       <aside>
         @if (nextStatuses().length) {
           <section class="decision">
@@ -153,6 +158,7 @@
       </aside>
     </div>
 
+    <!-- Native <dialog> opened with showModal(): it traps focus and closes on Escape. -->
     <dialog #declineDialog class="dialog" aria-labelledby="decline-title" (cancel)="cancelDecline()">
       <form (ngSubmit)="confirmDecline()">
         <h2 id="decline-title">Decline this application?</h2>

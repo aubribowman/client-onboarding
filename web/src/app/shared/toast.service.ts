@@ -6,7 +6,9 @@ export interface Toast {
   link?: { label: string; commands: unknown[] };
 }
 
-/** One short notice at a time, shown by the app shell. */
+/** One short notice at a time, shown by the app shell.
+    Example: toasts.show({ message: 'Approved', tone: 'success' }).
+    A new toast replaces the current one; each hides itself after `ms`. */
 @Injectable({ providedIn: 'root' })
 export class ToastService {
   readonly current = signal<Toast | null>(null);

@@ -2,6 +2,8 @@ import { Component, input } from '@angular/core';
 import { AbstractControl } from '@angular/forms';
 
 // Shows one message for a control once the user has touched it.
+// Give the input aria-describedby="<same id>" so screen readers read it.
+// Usage: <app-field-error [control]="form.get('email')" id="email-error" label="an email" />
 @Component({
   selector: 'app-field-error',
   template: `
@@ -22,6 +24,7 @@ export class FieldErrorComponent {
     const control = this.control();
     if (!control || !control.errors || !(control.touched || control.dirty)) return null;
 
+    // Only the first error is shown, so the person fixes one thing at a time.
     const [key, detail] = Object.entries(control.errors)[0];
     const custom = this.messages()[key];
     if (custom) return custom;

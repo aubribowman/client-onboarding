@@ -1,3 +1,5 @@
+// Queue helpers shared by the home page and the review queue: which
+// applications are still open, and how long each has been waiting.
 import { ApplicationStatus, ApplicationSummary } from './models';
 
 /** Statuses that still need someone to act. */
@@ -12,7 +14,8 @@ export function daysWaiting(app: Pick<ApplicationSummary, 'status' | 'submittedA
   return Number.isNaN(since) ? null : Math.max(0, Math.floor((now.getTime() - since) / DAY));
 }
 
-/** Amber from two days, red from four. */
+/** Color for the "Waiting" column: amber from two days, red from four.
+    Change these thresholds here; the home page's overdue count uses them too. */
 export function waitingTone(days: number | null): 'ok' | 'warn' | 'late' | null {
   if (days == null) return null;
   return days >= 4 ? 'late' : days >= 2 ? 'warn' : 'ok';

@@ -1,7 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { Theme, ThemeService } from '../core/theme.service';
 
-/** Light / Dark / System, as a row of three radio buttons shown as icons. */
+/** Light / Dark / System, as a row of three radio buttons shown as icons.
+    Real (visually hidden) radios give keyboard and screen reader support for
+    free; the labels are styled as a segmented control. State lives in ThemeService. */
 @Component({
   selector: 'app-theme-switch',
   template: `

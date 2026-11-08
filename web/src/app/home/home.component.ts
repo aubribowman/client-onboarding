@@ -11,6 +11,9 @@ import { readDraftSummary } from '../wizard/draft';
 
 type Load = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; items: ApplicationSummary[] };
 
+/** The landing page (route /): a greeting, two action cards (start or
+    continue an application, open the queue), and the five open
+    applications that most need attention. */
 @Component({
   selector: 'app-home',
   imports: [RouterLink, CurrencyPipe, DatePipe, StatusBadgeComponent],
@@ -22,6 +25,7 @@ export class HomeComponent {
 
   readonly today = new Date();
   readonly greeting = this.today.getHours() < 12 ? 'Good morning' : this.today.getHours() < 18 ? 'Good afternoon' : 'Good evening';
+  /** An unfinished application saved by the wizard, if any. Turns "Start" into "Continue". */
   readonly draft = readDraftSummary();
 
   readonly queue = toSignal(
@@ -44,6 +48,7 @@ export class HomeComponent {
     return c;
   });
 
+  /** NeedsInfo is left out: those are waiting on the client, not the reviewer. */
   readonly needsDecision = computed(() => this.counts().Submitted + this.counts().InReview);
 
   /** Open applications, longest wait first. Ones waiting on the client go last. */

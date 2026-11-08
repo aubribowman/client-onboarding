@@ -10,6 +10,7 @@
     </a>
   </header>
 
+  <!-- Summary strip: counts across the whole queue, whatever filter is picked. -->
   @if (total() !== null) {
     @let c = counts();
     <dl class="stats card" aria-label="Queue summary">
@@ -22,6 +23,7 @@
 
   <section class="table-card card">
     <div class="toolbar">
+      <!-- Filter chips. aria-pressed marks the active one for screen readers. -->
       <div class="chips-row" role="group" aria-label="Filter by status">
         @for (chip of chips(); track chip.value) {
           <button type="button" class="qchip" [class.on]="filter() === chip.value"

@@ -10,11 +10,13 @@ public static class SeedData
     {
         var samples = new[]
         {
+            // Answers are one per question, in RiskQuestionnaire order (1-4 each).
             Sample("Maya", "Okafor", "TN", "37203", AccountType.RothIra, 25_000m, [4, 3, 4, 3, 4]),
             Sample("Daniel", "Reyes", "GA", "30309", AccountType.Joint, 150_000m, [2, 2, 3, 3, 2]),
             Sample("Priya", "Natarajan", "AL", "35801", AccountType.Individual, 8_500m, [1, 1, 2, 2, 1])
         };
 
+        // Goes through the normal submit path, so seed data gets real scores and reference numbers.
         foreach (var request in samples)
             await service.SubmitAsync(request);
     }

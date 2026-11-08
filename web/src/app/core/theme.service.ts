@@ -13,6 +13,8 @@ export class ThemeService {
   readonly theme = signal<Theme>(readSaved());
 
   constructor() {
+    // Runs on start and whenever the signal changes. styles.scss swaps
+    // the color tokens based on the data-theme attribute.
     effect(() => {
       const theme = this.theme();
       if (theme === 'system') this.root.removeAttribute('data-theme');

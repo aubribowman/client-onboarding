@@ -5,6 +5,8 @@ import { FieldErrorComponent } from '../../shared/field-error.component';
 import { MoneyInputDirective } from '../../shared/formatted-inputs';
 import { OnboardingForm } from '../onboarding-form';
 
+/** Step 4: account type, initial deposit, and funding method.
+    The $1,000 minimum deposit is set in onboarding-form.ts. */
 @Component({
   selector: 'app-account-step',
   imports: [ReactiveFormsModule, FieldErrorComponent, MoneyInputDirective],

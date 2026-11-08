@@ -15,6 +15,8 @@
     }
   </header>
 
+  <!-- Stepper: a step shows a check once it's been reached and is valid.
+       Steps past `furthest` are disabled. -->
   <nav class="stepper card" aria-label="Application steps">
     <ol>
       @for (step of steps; track step.title; let i = $index) {
@@ -37,6 +39,8 @@
     </ol>
   </nav>
 
+  <!-- Enter submits the form, which means "Next" on every step but the last.
+       novalidate turns off the browser's own popups; FieldErrorComponent shows errors instead. -->
   <form [formGroup]="form" (ngSubmit)="isLast() ? submit() : next()" novalidate>
     @switch (loadState()) {
       @case ('loading') {
@@ -50,6 +54,7 @@
         </div>
       }
       @case ('ready') {
+        <!-- The risk step (2) draws its own cards, so it skips the shared card wrapper. -->
         <div class="step-body" [class.card]="current() !== 2" [class.padded]="current() !== 2">
           @switch (current()) {
             @case (0) { <app-personal-step [group]="form.controls.personal" /> }

@@ -1,3 +1,6 @@
+// Inputs that format themselves as the person types: money gets commas,
+// phone numbers get "(615) 555-0199". Add appMoney or appPhone to an
+// <input> that has a formControlName and it works with reactive forms.
 import { Directive, ElementRef, forwardRef, inject } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -15,7 +18,8 @@ export function formatPhoneInput(raw: string | null | undefined): string {
   return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
 }
 
-/** Keeps the caret after the same number of digits once the text is reformatted. */
+/** Keeps the caret after the same number of digits once the text is reformatted.
+    Without this, the caret jumps to the end whenever a comma or bracket is added. */
 function reformat(el: HTMLInputElement, next: string): void {
   const caret = el.selectionStart ?? el.value.length;
   const digitsBefore = el.value.slice(0, caret).replace(/\D/g, '').length;
@@ -27,6 +31,9 @@ function reformat(el: HTMLInputElement, next: string): void {
   if (document.activeElement === el) el.setSelectionRange(pos, pos);
 }
 
+// ControlValueAccessor is Angular's bridge between a form control and a
+// DOM element: writeValue pushes the control's value into the input, and
+// onChange/onTouched report the person's edits back to the form.
 abstract class FormattedInput implements ControlValueAccessor {
   protected readonly el = inject<ElementRef<HTMLInputElement>>(ElementRef).nativeElement;
   protected onChange: (value: unknown) => void = () => {};
@@ -48,6 +55,7 @@ export class MoneyInputDirective extends FormattedInput {
   writeValue(value: number | null): void { this.el.value = formatMoney(value); }
 
   handleInput(): void {
+    // Capped at 12 digits so huge pastes don't lose precision.
     const digits = this.el.value.replace(/\D/g, '').slice(0, 12);
     const value = digits ? Number(digits) : null;
     reformat(this.el, formatMoney(value));

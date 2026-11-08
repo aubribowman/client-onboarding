@@ -7,6 +7,8 @@ export type AccountType = 'Individual' | 'Joint' | 'TraditionalIra' | 'RothIra' 
 export type FundingMethod = 'BankTransfer' | 'AccountTransfer' | 'Check';
 export type EmploymentStatus = 'Employed' | 'SelfEmployed' | 'Retired' | 'Student' | 'NotEmployed';
 
+// --- What the wizard sends (POST /api/applications) ---
+
 export interface PersonalInfo {
   firstName: string;
   lastName: string;
@@ -28,7 +30,7 @@ export interface FinancialInfo {
 
 export interface RiskAnswer {
   questionId: string;
-  value: number;
+  value: number; // 1 (most cautious) to 4 (most risk-tolerant)
 }
 
 export interface AccountSetup {
@@ -45,26 +47,31 @@ export interface OnboardingRequest {
   acceptedTerms: boolean;
 }
 
+// --- What the API returns ---
+
+/** One entry in an application's audit trail. */
 export interface StatusChange {
   status: ApplicationStatus;
   changedAt: string;
   note: string | null;
 }
 
+/** A full application, as shown on the detail page. */
 export interface ClientApplication {
   id: string;
-  referenceNumber: string;
+  referenceNumber: string; // human-friendly, e.g. ONB-2026-00001
   submittedAt: string;
   personal: PersonalInfo;
   financial: FinancialInfo;
   riskAnswers: RiskAnswer[];
   account: AccountSetup;
-  riskScore: number;
+  riskScore: number; // calculated by the API, not sent by the client
   riskProfile: RiskProfile;
   status: ApplicationStatus;
-  history: StatusChange[];
+  history: StatusChange[]; // oldest first
 }
 
+/** A slimmer row for the review queue (GET /api/applications). */
 export interface ApplicationSummary {
   id: string;
   referenceNumber: string;

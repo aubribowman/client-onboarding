@@ -7,6 +7,9 @@ import { scoreRisk } from '../../core/risk';
 import { FieldErrorComponent } from '../../shared/field-error.component';
 import { OnboardingForm } from '../onboarding-form';
 
+/** Step 5: a read-only summary of every answer, the terms checkbox, and
+    any errors the API returned. Each section's "Edit" link emits the
+    step index, and the wizard jumps there. */
 @Component({
   selector: 'app-review-step',
   imports: [ReactiveFormsModule, CurrencyPipe, DatePipe, FieldErrorComponent],
@@ -27,6 +30,7 @@ export class ReviewStepComponent {
     return this.form().getRawValue();
   }
 
+  /** A preview of the score; the API calculates the stored one on submit. */
   risk() {
     const answers = this.value().risk;
     return scoreRisk(this.questions().map(q => answers[q.id] ?? null));

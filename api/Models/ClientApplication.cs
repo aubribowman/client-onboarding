@@ -16,12 +16,15 @@ public class ClientApplication
     public int RiskScore { get; init; }
     public RiskProfile RiskProfile { get; init; }
 
+    // The only settable field: it changes as the application is reviewed.
     public ApplicationStatus Status { get; set; } = ApplicationStatus.Submitted;
     public List<StatusChange> History { get; init; } = [];
 }
 
+/// <summary>One entry in an application's audit trail.</summary>
 public record StatusChange(ApplicationStatus Status, DateTimeOffset ChangedAt, string? Note);
 
+/// <summary>A row in the review queue; smaller than the full application.</summary>
 public record ApplicationSummary(
     Guid Id,
     string ReferenceNumber,
@@ -32,8 +35,10 @@ public record ApplicationSummary(
     ApplicationStatus Status,
     DateTimeOffset SubmittedAt);
 
+/// <summary>Body of PATCH /api/applications/{id}/status.</summary>
 public record StatusUpdateRequest(ApplicationStatus Status, string? Note);
 
+/// <summary>A questionnaire question and its four answer options.</summary>
 public record RiskQuestion(string Id, string Text, IReadOnlyList<RiskOption> Options);
 
 public record RiskOption(int Value, string Label);

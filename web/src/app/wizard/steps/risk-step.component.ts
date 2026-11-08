@@ -7,6 +7,8 @@ import { RiskQuestion } from '../../core/models';
 import { scoreRisk } from '../../core/risk';
 import { OnboardingForm } from '../onboarding-form';
 
+// The summary gauge is an SVG circle with r=34. Its fill is drawn with
+// stroke-dasharray, which needs the circle's length.
 const GAUGE_CIRCUMFERENCE = 2 * Math.PI * 34;
 
 /** Shows the questionnaire one question at a time. The wizard owns `index`
@@ -22,6 +24,7 @@ export class RiskStepComponent implements OnInit {
   readonly group = input.required<OnboardingForm['controls']['risk']>();
   readonly questions = input.required<RiskQuestion[]>();
   readonly showErrors = input(false);
+  /** Two-way bound with the wizard: [(index)]="riskIndex". */
   readonly index = model(0);
 
   readonly descriptions = riskProfileDescriptions;
@@ -56,6 +59,7 @@ export class RiskStepComponent implements OnInit {
       .subscribe(() => this.answers.set(group.getRawValue()));
   }
 
+  /** True when the person pressed Next without answering the question on screen. */
   isMissing(): boolean {
     const q = this.question();
     return !!q && this.showErrors() && !!this.group().controls[q.id]?.invalid;
